@@ -4,37 +4,73 @@ import CoreLocation
 struct RestaurantListView: View {
     let preferences: UserPreferences
     let location: CLLocation?
+    let authorizationStatus: CLAuthorizationStatus
     
     @State private var restaurants: [Restaurant] = []
     @State private var isLoading = false
     @State private var error: Error?
+    @State private var lastRequestTime: Date?
     
-    private let yelpService = YelpAPIService(apiKey: "6EFcYbmtpBLAn3zTD3fXcrzgbew6uaXWRmXGQcQgL3PfCBv0T2F7PuSk5XgZpdhvBNoKc5ruaHuXpBGc1H3pbuEPmxZ2UXeMFEpyEMmNuQHlj4OQmcZ6hxZ3Yx")
+    // Minimum time between requests (5 seconds)
+    private let requestThrottle: TimeInterval = 5
+    
+    // Initialize YelpAPIService with the API key
+    private let yelpService: YelpAPIService = {
+        // Hardcoded Yelp API key for development
+        let key = "6EFcYbmtpBLAn3zTD3fXcrzgbew6uaXWRmXGQcQgL3PfCBv0T2F7PuSk5XgZpdhvBNoKc5ruaHuXpBGc1H3pbuEPmxZ2UXeMFEpyEMmNuQHlj4OQmcZ6hxZ3Yx"
+        print("Initializing YelpAPIService with key length: \(key.count)")
+        return YelpAPIService(apiKey: key)
+    }()
     
     var body: some View {
         NavigationView {
             Group {
-                if isLoading {
+                if authorizationStatus == .denied {
+                    ContentUnavailableView("Location Access Required",
+                        systemImage: "location.slash",
+                        description: Text("Please enable location access in Settings to find restaurants near you")
+                    )
+                    .overlay(
+                        Button("Open Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .padding(.top, 20),
+                        alignment: .bottom
+                    )
+                } else if isLoading {
                     ProgressView("Finding restaurants...")
                 } else if let error = error {
                     ErrorView(error: error) {
-                        if !yelpService.apiKey.isEmpty {
-                            await loadRestaurants()
-                        } else {
-                            self.error = NSError(
-                                domain: "YelpAPI",
-                                code: -1,
-                                userInfo: [NSLocalizedDescriptionKey: "Please set your Yelp API key in RestaurantListView.swift"]
-                            )
-                        }
+                        await loadRestaurants(force: true)
                     }
+                } else if restaurants.isEmpty {
+                    ContentUnavailableView("No Restaurants Found", 
+                        systemImage: "fork.knife.circle",
+                        description: Text("Try adjusting your preferences or increasing the search radius")
+                    )
                 } else {
                     restaurantList
                 }
             }
             .navigationTitle("Nearby Restaurants")
             .task {
-                await loadRestaurants()
+                // Only load if we have a location and enough time has passed
+                if location != nil {
+                    await loadRestaurants()
+                }
+            }
+            .onChange(of: location) { oldLocation, newLocation in
+                // Only reload if we have a new location and it's significantly different
+                if let new = newLocation,
+                   let old = oldLocation,
+                   new.distance(from: old) > 100 { // More than 100m change
+                    Task {
+                        await loadRestaurants()
+                    }
+                }
             }
         }
     }
@@ -46,30 +82,99 @@ struct RestaurantListView: View {
             }
         }
         .refreshable {
-            await loadRestaurants()
+            await loadRestaurants(force: true)
         }
     }
     
-    private func loadRestaurants() async {
-        guard let location = location else {
-            error = NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Location not available"])
+    private func loadRestaurants(force: Bool = false) async {
+        // Check if we should throttle the request
+        if !force, let lastRequest = lastRequestTime {
+            let timeSinceLastRequest = Date().timeIntervalSince(lastRequest)
+            if timeSinceLastRequest < requestThrottle {
+                print("Request throttled. Time since last request: \(timeSinceLastRequest)s")
+                return
+            }
+        }
+        
+        guard authorizationStatus != .denied else {
+            error = NSError(
+                domain: "Location",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Location access is required to find restaurants"]
+            )
             return
         }
         
+        guard let location = location else {
+            error = NSError(
+                domain: "Location",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Waiting for location..."]
+            )
+            return
+        }
+        
+        // Don't load if we're already loading
+        guard !isLoading else { return }
+        
         isLoading = true
         error = nil
+        lastRequestTime = Date()
         
         do {
+            print("Loading restaurants for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+            print("Search radius: \(preferences.maxDistance) miles")
+            print("Cuisine preferences: \(preferences.cuisinePreferences)")
+            print("Price range: \(preferences.priceRange)")
+            
             let radius = Int(preferences.maxDistance * 1609.34) // Convert miles to meters
-            restaurants = try await yelpService.searchRestaurants(
+            let newRestaurants = try await yelpService.searchRestaurants(
                 latitude: location.coordinate.latitude,
                 longitude: location.coordinate.longitude,
                 categories: preferences.cuisinePreferences,
                 price: preferences.priceRange,
                 radius: radius
             )
+            
+            // Update on main thread
+            await MainActor.run {
+                if newRestaurants.isEmpty {
+                    error = NSError(
+                        domain: "YelpAPI",
+                        code: -1,
+                        userInfo: [NSLocalizedDescriptionKey: "No restaurants found matching your preferences. Try adjusting your filters."]
+                    )
+                } else {
+                    restaurants = newRestaurants
+                    error = nil
+                }
+                print("Found \(newRestaurants.count) restaurants")
+            }
         } catch {
-            self.error = error
+            print("Error loading restaurants: \(error.localizedDescription)")
+            await MainActor.run {
+                // Create a more user-friendly error message
+                let errorMessage: String
+                if let urlError = error as? URLError {
+                    switch urlError.code {
+                    case .notConnectedToInternet:
+                        errorMessage = "No internet connection. Please check your connection and try again."
+                    case .timedOut:
+                        errorMessage = "Request timed out. Please try again."
+                    default:
+                        errorMessage = "Network error: \(urlError.localizedDescription)"
+                    }
+                } else {
+                    errorMessage = "Failed to load restaurants. Please try again."
+                }
+                
+                self.error = NSError(
+                    domain: "YelpAPI",
+                    code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: errorMessage]
+                )
+                self.restaurants = []
+            }
         }
         
         isLoading = false

@@ -10,7 +10,7 @@ class YelpAPIService {
     
     private func convertPriceToYelpFormat(_ price: String) -> String {
         let count = price.filter { $0 == "$" }.count
-        return (1...count).map { String($0) }.joined(separator: ",")
+        return String(count)
     }
     
     func searchRestaurants(
@@ -55,9 +55,9 @@ class YelpAPIService {
         request.httpMethod = "GET"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 30
         
         print("Making request to: \(url.absoluteString)")
-        print("With Authorization: Bearer \(apiKey)")
         
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -66,16 +66,26 @@ class YelpAPIService {
                 throw APIError.invalidResponse
             }
             
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("Response (\(httpResponse.statusCode)): \(responseString)")
+            if httpResponse.statusCode != 200 {
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("Error Response (\(httpResponse.statusCode)): \(responseString)")
+                }
             }
             
             switch httpResponse.statusCode {
             case 200:
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
-                let searchResponse = try decoder.decode(RestaurantSearchResponse.self, from: data)
-                return searchResponse.businesses
+                do {
+                    let searchResponse = try decoder.decode(RestaurantSearchResponse.self, from: data)
+                    return searchResponse.businesses
+                } catch {
+                    print("Decoding error: \(error)")
+                    if let responseString = String(data: data, encoding: .utf8) {
+                        print("Response data: \(responseString)")
+                    }
+                    throw APIError.invalidData
+                }
             case 400:
                 throw APIError.invalidRequest
             case 401:
@@ -85,9 +95,6 @@ class YelpAPIService {
             default:
                 throw APIError.serverError(statusCode: httpResponse.statusCode)
             }
-        } catch let error as DecodingError {
-            print("Decoding error: \(error)")
-            throw APIError.invalidData
         } catch let error as APIError {
             throw error
         } catch {
@@ -112,19 +119,19 @@ extension YelpAPIService {
         var errorDescription: String? {
             switch self {
             case .missingAPIKey:
-                return "Please add your Yelp API key in RestaurantListView.swift"
+                return "Please check your Yelp API key"
             case .invalidAPIKey:
                 return "Invalid API key. Please check your Yelp API key."
             case .invalidResponse:
-                return "Invalid response from server."
+                return "Invalid response from server. Please try again."
             case .invalidData:
-                return "Could not parse the response from server."
+                return "Could not understand the server response. Please try again."
             case .invalidRequest:
-                return "Invalid request parameters. Please check your search criteria."
+                return "Invalid search criteria. Please adjust your preferences."
             case .rateLimitExceeded:
-                return "Rate limit exceeded. Please try again later."
+                return "Too many requests. Please try again in a few minutes."
             case .serverError(let statusCode):
-                return "Server error occurred (Status: \(statusCode))"
+                return "Server error (Status: \(statusCode)). Please try again."
             case .networkError(let error):
                 return "Network error: \(error.localizedDescription)"
             }
