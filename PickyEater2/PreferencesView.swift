@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Observation
 
 struct PreferencesView: View {
     @Bindable var preferences: UserPreferences

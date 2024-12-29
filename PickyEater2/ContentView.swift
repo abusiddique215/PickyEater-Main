@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import CoreLocation
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -48,7 +49,7 @@ struct ContentView: View {
 }
 
 // MARK: - Location Manager
-class LocationManager: NSObject, ObservableObject {
+class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     @Published var location: CLLocation?
     
@@ -62,9 +63,7 @@ class LocationManager: NSObject, ObservableObject {
         manager.requestWhenInUseAuthorization()
         manager.startUpdatingLocation()
     }
-}
-
-extension LocationManager: CLLocationManagerDelegate {
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         location = locations.first
         manager.stopUpdatingLocation()

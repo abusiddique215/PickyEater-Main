@@ -10,20 +10,18 @@ import SwiftData
 
 @main
 struct PickyEater2App: App {
-    let modelContainer: ModelContainer
-    
-    init() {
+    var sharedModelContainer: ModelContainer = {
         do {
-            modelContainer = try ModelContainer(for: UserPreferences.self)
+            return try ModelContainer(for: UserPreferences.self)
         } catch {
-            fatalError("Could not initialize ModelContainer: \(error)")
+            fatalError("Failed to create ModelContainer: \(error.localizedDescription)")
         }
-    }
+    }()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(modelContainer)
+        .modelContainer(sharedModelContainer)
     }
 }

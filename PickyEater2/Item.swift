@@ -10,18 +10,38 @@ import SwiftData
 
 @Model
 final class UserPreferences {
-    var dietaryRestrictions: [String]
-    var cuisinePreferences: [String]
-    var priceRange: String
-    var maxDistance: Double // in miles
-    var lastUpdated: Date
+    @Attribute private var dietaryRestrictionsData: Data = Data()
+    @Attribute private var cuisinePreferencesData: Data = Data()
+    var priceRange: String = "$$"
+    var maxDistance: Double = 5.0
+    var lastUpdated: Date = Date()
     
-    init(dietaryRestrictions: [String] = [], 
-         cuisinePreferences: [String] = [], 
-         priceRange: String = "$$", 
-         maxDistance: Double = 5.0) {
-        self.dietaryRestrictions = dietaryRestrictions
-        self.cuisinePreferences = cuisinePreferences
+    var dietaryRestrictions: [String] {
+        get {
+            (try? JSONDecoder().decode([String].self, from: dietaryRestrictionsData)) ?? []
+        }
+        set {
+            dietaryRestrictionsData = (try? JSONEncoder().encode(newValue)) ?? Data()
+        }
+    }
+    
+    var cuisinePreferences: [String] {
+        get {
+            (try? JSONDecoder().decode([String].self, from: cuisinePreferencesData)) ?? []
+        }
+        set {
+            cuisinePreferencesData = (try? JSONEncoder().encode(newValue)) ?? Data()
+        }
+    }
+    
+    init() {}
+    
+    init(dietaryRestrictions: [String], 
+         cuisinePreferences: [String], 
+         priceRange: String, 
+         maxDistance: Double) {
+        self.dietaryRestrictionsData = (try? JSONEncoder().encode(dietaryRestrictions)) ?? Data()
+        self.cuisinePreferencesData = (try? JSONEncoder().encode(cuisinePreferences)) ?? Data()
         self.priceRange = priceRange
         self.maxDistance = maxDistance
         self.lastUpdated = Date()

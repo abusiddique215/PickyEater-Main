@@ -9,7 +9,7 @@ struct RestaurantListView: View {
     @State private var isLoading = false
     @State private var error: Error?
     
-    private let yelpService = YelpAPIService(apiKey: "YOUR_YELP_API_KEY") // Replace with your API key
+    private let yelpService = YelpAPIService(apiKey: "6EFcYbmtpBLAn3zTD3fXcrzgbew6uaXWRmXGQcQgL3PfCBv0T2F7PuSk5XgZpdhvBNoKc5ruaHuXpBGc1H3pbuEPmxZ2UXeMFEpyEMmNuQHlj4OQmcZ6hxZ3Yx")
     
     var body: some View {
         NavigationView {
@@ -17,7 +17,17 @@ struct RestaurantListView: View {
                 if isLoading {
                     ProgressView("Finding restaurants...")
                 } else if let error = error {
-                    ErrorView(error: error, retryAction: loadRestaurants)
+                    ErrorView(error: error) {
+                        if !yelpService.apiKey.isEmpty {
+                            await loadRestaurants()
+                        } else {
+                            self.error = NSError(
+                                domain: "YelpAPI",
+                                code: -1,
+                                userInfo: [NSLocalizedDescriptionKey: "Please set your Yelp API key in RestaurantListView.swift"]
+                            )
+                        }
+                    }
                 } else {
                     restaurantList
                 }
@@ -94,7 +104,7 @@ struct RestaurantRowView: View {
 
 struct ErrorView: View {
     let error: Error
-    let retryAction: () -> Void
+    let retryAction: () async -> Void
     
     var body: some View {
         VStack(spacing: 16) {
@@ -107,7 +117,9 @@ struct ErrorView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             Button("Try Again") {
-                retryAction()
+                Task {
+                    await retryAction()
+                }
             }
             .buttonStyle(.bordered)
         }
