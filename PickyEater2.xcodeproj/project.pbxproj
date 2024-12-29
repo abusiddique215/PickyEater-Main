@@ -1,0 +1,587 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		FD3BE1C12D21D24700109310 /* .cursorrules in Resources */ = {isa = PBXBuildFile; fileRef = FD3BE1C02D21D23C00109310 /* .cursorrules */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		FD3BE1A32D21D23400109310 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FD3BE1862D21D23200109310 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FD3BE18D2D21D23200109310;
+			remoteInfo = PickyEater2;
+		};
+		FD3BE1AD2D21D23400109310 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FD3BE1862D21D23200109310 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FD3BE18D2D21D23200109310;
+			remoteInfo = PickyEater2;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		FD3BE18E2D21D23200109310 /* PickyEater2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PickyEater2.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FD3BE1A22D21D23400109310 /* PickyEater2Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PickyEater2Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FD3BE1AC2D21D23400109310 /* PickyEater2UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PickyEater2UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FD3BE1C02D21D23C00109310 /* .cursorrules */ = {isa = PBXFileReference; lastKnownFileType = text; path = .cursorrules; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FD3BE1B42D21D23400109310 /* Exceptions for "PickyEater2" folder in "PickyEater2" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FD3BE18D2D21D23200109310 /* PickyEater2 */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		FD3BE1902D21D23200109310 /* PickyEater2 */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FD3BE1B42D21D23400109310 /* Exceptions for "PickyEater2" folder in "PickyEater2" target */,
+			);
+			path = PickyEater2;
+			sourceTree = "<group>";
+		};
+		FD3BE1A52D21D23400109310 /* PickyEater2Tests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PickyEater2Tests;
+			sourceTree = "<group>";
+		};
+		FD3BE1AF2D21D23400109310 /* PickyEater2UITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PickyEater2UITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FD3BE18B2D21D23200109310 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FD3BE19F2D21D23400109310 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FD3BE1A92D21D23400109310 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FD3BE1852D21D23200109310 = {
+			isa = PBXGroup;
+			children = (
+				FD3BE1C02D21D23C00109310 /* .cursorrules */,
+				FD3BE1902D21D23200109310 /* PickyEater2 */,
+				FD3BE1A52D21D23400109310 /* PickyEater2Tests */,
+				FD3BE1AF2D21D23400109310 /* PickyEater2UITests */,
+				FD3BE18F2D21D23200109310 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FD3BE18F2D21D23200109310 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FD3BE18E2D21D23200109310 /* PickyEater2.app */,
+				FD3BE1A22D21D23400109310 /* PickyEater2Tests.xctest */,
+				FD3BE1AC2D21D23400109310 /* PickyEater2UITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FD3BE18D2D21D23200109310 /* PickyEater2 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FD3BE1B52D21D23400109310 /* Build configuration list for PBXNativeTarget "PickyEater2" */;
+			buildPhases = (
+				FD3BE18A2D21D23200109310 /* Sources */,
+				FD3BE18B2D21D23200109310 /* Frameworks */,
+				FD3BE18C2D21D23200109310 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				FD3BE1902D21D23200109310 /* PickyEater2 */,
+			);
+			name = PickyEater2;
+			packageProductDependencies = (
+			);
+			productName = PickyEater2;
+			productReference = FD3BE18E2D21D23200109310 /* PickyEater2.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FD3BE1A12D21D23400109310 /* PickyEater2Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FD3BE1BA2D21D23400109310 /* Build configuration list for PBXNativeTarget "PickyEater2Tests" */;
+			buildPhases = (
+				FD3BE19E2D21D23400109310 /* Sources */,
+				FD3BE19F2D21D23400109310 /* Frameworks */,
+				FD3BE1A02D21D23400109310 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FD3BE1A42D21D23400109310 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FD3BE1A52D21D23400109310 /* PickyEater2Tests */,
+			);
+			name = PickyEater2Tests;
+			packageProductDependencies = (
+			);
+			productName = PickyEater2Tests;
+			productReference = FD3BE1A22D21D23400109310 /* PickyEater2Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		FD3BE1AB2D21D23400109310 /* PickyEater2UITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FD3BE1BD2D21D23400109310 /* Build configuration list for PBXNativeTarget "PickyEater2UITests" */;
+			buildPhases = (
+				FD3BE1A82D21D23400109310 /* Sources */,
+				FD3BE1A92D21D23400109310 /* Frameworks */,
+				FD3BE1AA2D21D23400109310 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FD3BE1AE2D21D23400109310 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FD3BE1AF2D21D23400109310 /* PickyEater2UITests */,
+			);
+			name = PickyEater2UITests;
+			packageProductDependencies = (
+			);
+			productName = PickyEater2UITests;
+			productReference = FD3BE1AC2D21D23400109310 /* PickyEater2UITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FD3BE1862D21D23200109310 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1610;
+				LastUpgradeCheck = 1610;
+				TargetAttributes = {
+					FD3BE18D2D21D23200109310 = {
+						CreatedOnToolsVersion = 16.1;
+					};
+					FD3BE1A12D21D23400109310 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = FD3BE18D2D21D23200109310;
+					};
+					FD3BE1AB2D21D23400109310 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = FD3BE18D2D21D23200109310;
+					};
+				};
+			};
+			buildConfigurationList = FD3BE1892D21D23200109310 /* Build configuration list for PBXProject "PickyEater2" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = FD3BE1852D21D23200109310;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = FD3BE18F2D21D23200109310 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FD3BE18D2D21D23200109310 /* PickyEater2 */,
+				FD3BE1A12D21D23400109310 /* PickyEater2Tests */,
+				FD3BE1AB2D21D23400109310 /* PickyEater2UITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FD3BE18C2D21D23200109310 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FD3BE1C12D21D24700109310 /* .cursorrules in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FD3BE1A02D21D23400109310 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FD3BE1AA2D21D23400109310 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FD3BE18A2D21D23200109310 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FD3BE19E2D21D23400109310 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FD3BE1A82D21D23400109310 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		FD3BE1A42D21D23400109310 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FD3BE18D2D21D23200109310 /* PickyEater2 */;
+			targetProxy = FD3BE1A32D21D23400109310 /* PBXContainerItemProxy */;
+		};
+		FD3BE1AE2D21D23400109310 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FD3BE18D2D21D23200109310 /* PickyEater2 */;
+			targetProxy = FD3BE1AD2D21D23400109310 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		FD3BE1B62D21D23400109310 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PickyEater2/PickyEater2.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"PickyEater2/Preview Content\"";
+				DEVELOPMENT_TEAM = K6UBSX4Q43;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PickyEater2/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = babubhaisab.PickyEater2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FD3BE1B72D21D23400109310 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PickyEater2/PickyEater2.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"PickyEater2/Preview Content\"";
+				DEVELOPMENT_TEAM = K6UBSX4Q43;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PickyEater2/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = babubhaisab.PickyEater2;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		FD3BE1B82D21D23400109310 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		FD3BE1B92D21D23400109310 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		FD3BE1BB2D21D23400109310 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K6UBSX4Q43;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = babubhaisab.PickyEater2Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PickyEater2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PickyEater2";
+			};
+			name = Debug;
+		};
+		FD3BE1BC2D21D23400109310 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K6UBSX4Q43;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = babubhaisab.PickyEater2Tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PickyEater2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PickyEater2";
+			};
+			name = Release;
+		};
+		FD3BE1BE2D21D23400109310 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K6UBSX4Q43;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = babubhaisab.PickyEater2UITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = PickyEater2;
+			};
+			name = Debug;
+		};
+		FD3BE1BF2D21D23400109310 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K6UBSX4Q43;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = babubhaisab.PickyEater2UITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = PickyEater2;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FD3BE1892D21D23200109310 /* Build configuration list for PBXProject "PickyEater2" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FD3BE1B82D21D23400109310 /* Debug */,
+				FD3BE1B92D21D23400109310 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FD3BE1B52D21D23400109310 /* Build configuration list for PBXNativeTarget "PickyEater2" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FD3BE1B62D21D23400109310 /* Debug */,
+				FD3BE1B72D21D23400109310 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FD3BE1BA2D21D23400109310 /* Build configuration list for PBXNativeTarget "PickyEater2Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FD3BE1BB2D21D23400109310 /* Debug */,
+				FD3BE1BC2D21D23400109310 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FD3BE1BD2D21D23400109310 /* Build configuration list for PBXNativeTarget "PickyEater2UITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FD3BE1BE2D21D23400109310 /* Debug */,
+				FD3BE1BF2D21D23400109310 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = FD3BE1862D21D23200109310 /* Project object */;
+}
