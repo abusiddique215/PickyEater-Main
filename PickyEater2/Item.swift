@@ -1,4 +1,4 @@
-//
+  //
 //  Item.swift
 //  PickyEater2
 //
@@ -10,38 +10,40 @@ import SwiftData
 
 @Model
 final class UserPreferences {
-    @Attribute private var dietaryRestrictionsData: Data = Data()
-    @Attribute private var cuisinePreferencesData: Data = Data()
-    var priceRange: String = "$$"
-    var maxDistance: Double = 5.0
-    var lastUpdated: Date = Date()
+    @Attribute(.unique) var id: String = UUID().uuidString
+    @Attribute var dietaryRestrictionsString: String = ""
+    @Attribute var cuisinePreferencesString: String = ""
+    @Attribute var priceRange: String = "$$"
+    @Attribute var maxDistance: Double = 5.0
+    @Attribute var lastUpdated: Date = Date()
     
     var dietaryRestrictions: [String] {
         get {
-            (try? JSONDecoder().decode([String].self, from: dietaryRestrictionsData)) ?? []
+            dietaryRestrictionsString.isEmpty ? [] : dietaryRestrictionsString.components(separatedBy: ",")
         }
         set {
-            dietaryRestrictionsData = (try? JSONEncoder().encode(newValue)) ?? Data()
+            dietaryRestrictionsString = newValue.joined(separator: ",")
         }
     }
     
     var cuisinePreferences: [String] {
         get {
-            (try? JSONDecoder().decode([String].self, from: cuisinePreferencesData)) ?? []
+            cuisinePreferencesString.isEmpty ? [] : cuisinePreferencesString.components(separatedBy: ",")
         }
         set {
-            cuisinePreferencesData = (try? JSONEncoder().encode(newValue)) ?? Data()
+            cuisinePreferencesString = newValue.joined(separator: ",")
         }
     }
     
     init() {}
     
-    init(dietaryRestrictions: [String], 
-         cuisinePreferences: [String], 
-         priceRange: String, 
-         maxDistance: Double) {
-        self.dietaryRestrictionsData = (try? JSONEncoder().encode(dietaryRestrictions)) ?? Data()
-        self.cuisinePreferencesData = (try? JSONEncoder().encode(cuisinePreferences)) ?? Data()
+    convenience init(dietaryRestrictions: [String], 
+                    cuisinePreferences: [String], 
+                    priceRange: String, 
+                    maxDistance: Double) {
+        self.init()
+        self.dietaryRestrictionsString = dietaryRestrictions.joined(separator: ",")
+        self.cuisinePreferencesString = cuisinePreferences.joined(separator: ",")
         self.priceRange = priceRange
         self.maxDistance = maxDistance
         self.lastUpdated = Date()

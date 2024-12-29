@@ -10,18 +10,29 @@ import SwiftData
 
 @main
 struct PickyEater2App: App {
-    var sharedModelContainer: ModelContainer = {
+    let container: ModelContainer
+    
+    init() {
+        let schema = Schema([
+            UserPreferences.self,
+        ])
+        let modelConfiguration = ModelConfiguration(schema: schema)
+        
         do {
-            return try ModelContainer(for: UserPreferences.self)
+            container = try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Failed to create ModelContainer: \(error.localizedDescription)")
+            print("Error setting up SwiftData container: \(error)")
+            fatalError("Could not set up SwiftData container")
         }
-    }()
+    }
     
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .modelContainer(container)
+                .onAppear {
+                    print("App started with SwiftData container")
+                }
         }
-        .modelContainer(sharedModelContainer)
     }
 }
