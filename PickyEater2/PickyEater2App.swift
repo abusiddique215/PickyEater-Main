@@ -10,25 +10,20 @@ import SwiftData
 
 @main
 struct PickyEater2App: App {
-    let container: ModelContainer
+    let modelContainer: ModelContainer
     
     init() {
         do {
-            let schema = Schema([
-                UserPreferences.self
-            ])
-            let config = ModelConfiguration(schema: schema)
-            container = try ModelContainer(for: schema, configurations: [config])
+            modelContainer = try ModelContainer(for: UserPreferences.self)
         } catch {
-            print("Error setting up SwiftData container: \(error)")
-            fatalError("Could not set up SwiftData container")
+            fatalError("Could not initialize ModelContainer: \(error)")
         }
     }
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .modelContainer(container)
+            MainTabView()
         }
+        .modelContainer(modelContainer)
     }
 }
