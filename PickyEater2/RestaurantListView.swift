@@ -3,7 +3,7 @@ import CoreLocation
 
 struct RestaurantListView: View {
     let preferences: UserPreferences
-    let location: CLLocation?
+    let location: CLLocation
     let authorizationStatus: CLAuthorizationStatus
     
     @State private var restaurants: [Restaurant] = []
@@ -22,63 +22,31 @@ struct RestaurantListView: View {
     }()
     
     var body: some View {
-        NavigationView {
-            Group {
-                if authorizationStatus == .denied {
-                    ContentUnavailableView("Location Access Required",
-                        systemImage: "location.slash",
-                        description: Text("Please enable location access in Settings to find restaurants near you")
-                    )
-                    .overlay(
-                        Button("Open Settings") {
-                            if let url = URL(string: UIApplication.openSettingsURLString) {
-                                UIApplication.shared.open(url)
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                        .padding(.top, 20),
-                        alignment: .bottom
-                    )
-                } else if isLoading {
-                    ProgressView("Finding restaurants...")
-                } else if let error = error {
-                    ErrorView(error: error) {
-                        await loadRestaurants(force: true)
-                    }
-                } else if restaurants.isEmpty {
-                    ContentUnavailableView("No Restaurants Found", 
-                        systemImage: "fork.knife.circle",
-                        description: Text("Try adjusting your preferences or increasing the search radius")
-                    )
-                } else {
-                    restaurantList
+        Group {
+            if isLoading {
+                ProgressView("Finding restaurants...")
+            } else if let error = error {
+                ErrorView(error: error) {
+                    await loadRestaurants(force: true)
                 }
+            } else if restaurants.isEmpty {
+                ContentUnavailableView("No Restaurants Found", 
+                    systemImage: "fork.knife.circle",
+                    description: Text("Try adjusting your preferences or increasing the search radius")
+                )
+            } else {
+                restaurantList
             }
-            .navigationTitle("Nearby Restaurants")
-            .task {
-                // Only load if we have a location and enough time has passed
-                if location != nil {
-                    await loadRestaurants()
-                }
-            }
-            .onChange(of: location) { oldLocation, newLocation in
-                // Only reload if we have a new location and it's significantly different
-                if let new = newLocation,
-                   let old = oldLocation,
-                   new.distance(from: old) > 100 { // More than 100m change
-                    Task {
-                        await loadRestaurants()
-                    }
-                }
-            }
+        }
+        .navigationTitle("Nearby Restaurants")
+        .task {
+            await loadRestaurants()
         }
     }
     
     private var restaurantList: some View {
         List(restaurants) { restaurant in
-            NavigationLink(destination: RestaurantDetailView(restaurant: restaurant)) {
-                RestaurantRowView(restaurant: restaurant)
-            }
+            RestaurantRowView(restaurant: restaurant)
         }
         .refreshable {
             await loadRestaurants(force: true)
@@ -95,25 +63,6 @@ struct RestaurantListView: View {
             }
         }
         
-        guard authorizationStatus != .denied else {
-            error = NSError(
-                domain: "Location",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Location access is required to find restaurants"]
-            )
-            return
-        }
-        
-        guard let location = location else {
-            error = NSError(
-                domain: "Location",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Waiting for location..."]
-            )
-            return
-        }
-        
-        // Don't load if we're already loading
         guard !isLoading else { return }
         
         isLoading = true
@@ -135,7 +84,6 @@ struct RestaurantListView: View {
                 radius: radius
             )
             
-            // Update on main thread
             await MainActor.run {
                 if newRestaurants.isEmpty {
                     error = NSError(
@@ -189,10 +137,12 @@ struct RestaurantRowView: View {
                 .font(.headline)
             
             HStack {
-                Text(restaurant.price ?? "")
-                    .foregroundColor(.secondary)
-                Text("•")
-                    .foregroundColor(.secondary)
+                if let price = restaurant.price {
+                    Text(price)
+                        .foregroundColor(.secondary)
+                    Text("•")
+                        .foregroundColor(.secondary)
+                }
                 Text(String(format: "%.1f", restaurant.rating))
                 Image(systemName: "star.fill")
                     .foregroundColor(.yellow)
@@ -290,24 +240,7 @@ struct RestaurantDetailView: View {
 }
 
 #Preview {
-    let sampleRestaurant = Restaurant(
-        id: "sample",
-        name: "Sample Restaurant",
-        rating: 4.5,
-        price: "$$",
-        location: Restaurant.Location(
-            address1: "123 Main St",
-            city: "San Francisco",
-            state: "CA",
-            zipCode: "94105"
-        ),
-        photos: nil,
-        categories: [
-            Restaurant.Category(alias: "american", title: "American")
-        ],
-        coordinates: Restaurant.Coordinates(latitude: 37.7749, longitude: -122.4194),
-        isClosed: false
-    )
-    
+    let sampleRestaurant = Restaurant.sample
     return RestaurantDetailView(restaurant: sampleRestaurant)
+        .navigationBarTitleDisplayMode(.inline)
 } 

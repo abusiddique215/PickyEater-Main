@@ -9,229 +9,110 @@ import SwiftUI
 import SwiftData
 import CoreLocation
 
-@Model
-class UserPreferences {
-    var maxDistance: Double
-    var priceRange: String
-    var dietaryRestrictions: [String]
-    var cuisinePreferences: [String]
-    
-    init(maxDistance: Double = 5.0,
-         priceRange: String = "$$",
-         dietaryRestrictions: [String] = [],
-         cuisinePreferences: [String] = []) {
-        self.maxDistance = maxDistance
-        self.priceRange = priceRange
-        self.dietaryRestrictions = dietaryRestrictions
-        self.cuisinePreferences = cuisinePreferences
-    }
-}
-
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var savedPreferences: [UserPreferences]
+    @Query private var preferences: [UserPreferences]
     @StateObject private var locationManager = LocationManager()
     @State private var showingPreferences = false
     
-    var preferences: UserPreferences {
-        if let existing = savedPreferences.first {
-            return existing
-        } else {
+    private var currentPreferences: UserPreferences {
+        get {
+            if let existing = preferences.first {
+                return existing
+            }
             let new = UserPreferences()
             modelContext.insert(new)
+            try? modelContext.save()
             return new
         }
     }
     
     var body: some View {
         Group {
-            switch locationManager.authorizationStatus {
-            case .notDetermined:
-                ProgressView("Requesting location access...")
+            switch locationManager.state {
+            case .notDetermined, .unavailable:
+                ContentUnavailableView {
+                    Label("Requesting Location Access", systemImage: locationManager.state.systemImage)
+                } description: {
+                    Text(locationManager.state.description)
+                }
             case .restricted, .denied:
-                ContentUnavailableView("Location Access Required",
-                    systemImage: "location.slash",
-                    description: Text("Please enable location access in Settings to find restaurants near you.")
-                )
-                .overlay(
+                ContentUnavailableView {
+                    Label("Location Access Required", systemImage: locationManager.state.systemImage)
+                } description: {
+                    Text(locationManager.state.description)
+                } actions: {
                     Button("Open Settings") {
                         if let url = URL(string: UIApplication.openSettingsURLString) {
                             UIApplication.shared.open(url)
                         }
                     }
                     .buttonStyle(.bordered)
-                    .padding(.top, 20),
-                    alignment: .bottom
-                )
-            case .authorizedWhenInUse, .authorizedAlways:
+                }
+            case .authorized:
                 mainView
-            @unknown default:
-                Text("Unknown authorization status")
             }
         }
+        .animation(.default, value: locationManager.state)
     }
     
+    @ViewBuilder
     private var mainView: some View {
         NavigationStack {
-            RestaurantListView(
-                preferences: preferences,
-                location: locationManager.location,
-                authorizationStatus: locationManager.authorizationStatus
-            )
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { showingPreferences = true }) {
-                        Label("Preferences", systemImage: "slider.horizontal.3")
+            if let location = locationManager.location {
+                RestaurantListView(
+                    preferences: currentPreferences,
+                    location: location,
+                    authorizationStatus: locationManager.authorizationStatus
+                )
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showingPreferences = true
+                        } label: {
+                            Label("Preferences", systemImage: "slider.horizontal.3")
+                        }
                     }
                 }
-            }
-            .sheet(isPresented: $showingPreferences) {
-                NavigationStack {
-                    PreferencesView(preferences: preferences)
-                        .navigationTitle("Preferences")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") {
-                                    showingPreferences = false
+                .sheet(isPresented: $showingPreferences) {
+                    NavigationStack {
+                        PreferencesView(preferences: currentPreferences)
+                            .navigationTitle("Preferences")
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .confirmationAction) {
+                                    Button("Done") {
+                                        showingPreferences = false
+                                    }
                                 }
                             }
-                        }
-                }
-                .presentationDetents([.medium])
-            }
-        }
-    }
-}
-
-@MainActor
-final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let manager: CLLocationManager
-    private var isUpdating = false
-    private var lastLocationUpdate: Date?
-    private let updateThrottle: TimeInterval = 5 // Minimum seconds between updates
-    
-    @Published private(set) var location: CLLocation?
-    @Published private(set) var authorizationStatus: CLAuthorizationStatus
-    @Published private(set) var lastError: Error?
-    
-    override init() {
-        self.manager = CLLocationManager()
-        self.authorizationStatus = manager.authorizationStatus
-        
-        super.init()
-        
-        Task {
-            await setupLocationManager()
-        }
-    }
-    
-    private func setupLocationManager() async {
-        manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        manager.distanceFilter = 100 // meters
-        manager.pausesLocationUpdatesAutomatically = true
-        manager.allowsBackgroundLocationUpdates = false     
-        
-        await MainActor.run {
-            manager.requestWhenInUseAuthorization()
-        }
-    }
-    
-    private func startUpdatingLocation() {
-        guard !isUpdating else { return }
-        isUpdating = true
-        Task {
-            await MainActor.run {
-                manager.startUpdatingLocation()
-                print("Started updating location")
-            }
-        }
-    }
-    
-    private func stopUpdatingLocation() {
-        guard isUpdating else { return }
-        isUpdating = false
-        Task {
-            await MainActor.run {
-                manager.stopUpdatingLocation()
-                print("Stopped updating location")
-            }
-        }
-    }
-    
-    // MARK: - CLLocationManagerDelegate
-    
-    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        Task { @MainActor in
-            self.authorizationStatus = manager.authorizationStatus
-            print("Location authorization status changed to: \(authorizationStatus.rawValue)")
-            
-            switch authorizationStatus {
-            case .authorizedWhenInUse, .authorizedAlways:
-                self.startUpdatingLocation()
-            case .denied, .restricted:
-                self.stopUpdatingLocation()
-                self.lastError = NSError(
-                    domain: "LocationManager",
-                    code: -1,
-                    userInfo: [NSLocalizedDescriptionKey: "Location access denied"]
-                )
-            default:
-                break
-            }
-        }
-    }
-    
-    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let newLocation = locations.last,
-              newLocation.horizontalAccuracy >= 0 else { return }
-        
-        Task { @MainActor in
-            // Only update if significant change or first location
-            if let currentLocation = self.location {
-                let distance = newLocation.distance(from: currentLocation)
-                if distance < 100 { // Less than 100 meters change
-                    return
-                }
-            }
-            
-            self.location = newLocation
-            self.lastLocationUpdate = Date()
-            print("Location updated: \(newLocation.coordinate.latitude), \(newLocation.coordinate.longitude)")
-            
-            // Stop updates after getting a good location
-            self.stopUpdatingLocation()
-        }
-    }
-    
-    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        Task { @MainActor in
-            print("Location error: \(error.localizedDescription)")
-            self.lastError = error
-            
-            if let clError = error as? CLError {
-                switch clError.code {
-                case .denied:
-                    self.authorizationStatus = .denied
-                    self.stopUpdatingLocation()
-                case .locationUnknown:
-                    // Only retry once
-                    if self.isUpdating {
-                        self.stopUpdatingLocation()
                     }
-                default:
-                    print("CLError: \(clError.code)")
-                    self.stopUpdatingLocation()
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
                 }
             } else {
-                self.stopUpdatingLocation()
+                ContentUnavailableView {
+                    Label("Waiting for Location", systemImage: "location.circle")
+                } description: {
+                    Text("Please wait while we get your location...")
+                }
             }
         }
     }
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: UserPreferences.self, inMemory: true)
+    do {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: UserPreferences.self, configurations: config)
+        let context = container.mainContext
+        let preferences = UserPreferences()
+        context.insert(preferences)
+        try context.save()
+        
+        return ContentView()
+            .modelContainer(container)
+    } catch {
+        return Text("Failed to create preview: \(error.localizedDescription)")
+    }
 }

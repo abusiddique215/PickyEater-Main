@@ -13,13 +13,12 @@ struct PickyEater2App: App {
     let container: ModelContainer
     
     init() {
-        let schema = Schema([
-            UserPreferences.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema)
-        
         do {
-            container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let schema = Schema([
+                UserPreferences.self
+            ])
+            let config = ModelConfiguration(schema: schema)
+            container = try ModelContainer(for: schema, configurations: [config])
         } catch {
             print("Error setting up SwiftData container: \(error)")
             fatalError("Could not set up SwiftData container")
@@ -30,9 +29,6 @@ struct PickyEater2App: App {
         WindowGroup {
             ContentView()
                 .modelContainer(container)
-                .onAppear {
-                    print("App started with SwiftData container")
-                }
         }
     }
 }
