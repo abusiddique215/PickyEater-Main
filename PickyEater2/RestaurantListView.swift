@@ -16,8 +16,7 @@ struct RestaurantListView: View {
     
     // Initialize YelpAPIService with the API key
     private let yelpService: YelpAPIService = {
-        // Hardcoded Yelp API key for development
-        let key = "6EFcYbmtpBLAn3zTD3fXcrzgbew6uaXWRmXGQcQgL3PfCBv0T2F7PuSk5XgZpdhvBNoKc5ruaHuXpBGc1H3pbuEPmxZ2UXeMFEpyEMmNuQHlj4OQmcZ6hxZ3Yx"
+        let key = "66FqVibmo8LAv3zTD3fxxrzgkewb6uAJWBmkXQ5zQgu3PlC8sl0T2F7PuUdxXgZqdhr8NoXc9xueluXgbiGc1hFJqhu6Pnw2ZUXeM9EpxJEMmNuQt9JkOQmcZ6hxZ3Yx"
         print("Initializing YelpAPIService with key length: \(key.count)")
         return YelpAPIService(apiKey: key)
     }()

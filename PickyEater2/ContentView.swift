@@ -9,14 +9,32 @@ import SwiftUI
 import SwiftData
 import CoreLocation
 
+@Model
+class UserPreferences {
+    var maxDistance: Double
+    var priceRange: String
+    var dietaryRestrictions: [String]
+    var cuisinePreferences: [String]
+    
+    init(maxDistance: Double = 5.0,
+         priceRange: String = "$$",
+         dietaryRestrictions: [String] = [],
+         cuisinePreferences: [String] = []) {
+        self.maxDistance = maxDistance
+        self.priceRange = priceRange
+        self.dietaryRestrictions = dietaryRestrictions
+        self.cuisinePreferences = cuisinePreferences
+    }
+}
+
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var preferences: [UserPreferences]
+    @Query private var savedPreferences: [UserPreferences]
     @StateObject private var locationManager = LocationManager()
-    @State private var selectedTab = 0
+    @State private var showingPreferences = false
     
-    var userPreferences: UserPreferences {
-        if let existing = preferences.first {
+    var preferences: UserPreferences {
+        if let existing = savedPreferences.first {
             return existing
         } else {
             let new = UserPreferences()
@@ -26,164 +44,189 @@ struct ContentView: View {
     }
     
     var body: some View {
-        TabView(selection: $selectedTab) {
+        Group {
+            switch locationManager.authorizationStatus {
+            case .notDetermined:
+                ProgressView("Requesting location access...")
+            case .restricted, .denied:
+                ContentUnavailableView("Location Access Required",
+                    systemImage: "location.slash",
+                    description: Text("Please enable location access in Settings to find restaurants near you.")
+                )
+                .overlay(
+                    Button("Open Settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .padding(.top, 20),
+                    alignment: .bottom
+                )
+            case .authorizedWhenInUse, .authorizedAlways:
+                mainView
+            @unknown default:
+                Text("Unknown authorization status")
+            }
+        }
+    }
+    
+    private var mainView: some View {
+        NavigationStack {
             RestaurantListView(
-                preferences: userPreferences,
+                preferences: preferences,
                 location: locationManager.location,
                 authorizationStatus: locationManager.authorizationStatus
             )
-            .tabItem {
-                Label("Restaurants", systemImage: "fork.knife")
-            }
-            .tag(0)
-            
-            PreferencesView(preferences: userPreferences)
-                .tabItem {
-                    Label("Preferences", systemImage: "slider.horizontal.3")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { showingPreferences = true }) {
+                        Label("Preferences", systemImage: "slider.horizontal.3")
+                    }
                 }
-                .tag(1)
-        }
-        .onAppear {
-            locationManager.requestLocation()
-        }
-        .onChange(of: selectedTab) { oldTab, newTab in
-            // Only request location when switching to restaurant tab
-            if newTab == 0 && oldTab == 1 {
-                locationManager.requestLocation()
+            }
+            .sheet(isPresented: $showingPreferences) {
+                NavigationStack {
+                    PreferencesView(preferences: preferences)
+                        .navigationTitle("Preferences")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("Done") {
+                                    showingPreferences = false
+                                }
+                            }
+                        }
+                }
+                .presentationDetents([.medium])
             }
         }
     }
 }
 
-// MARK: - Location Manager
-class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let manager = CLLocationManager()
+@MainActor
+final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    private let manager: CLLocationManager
     private var isUpdating = false
     private var lastLocationUpdate: Date?
     private let updateThrottle: TimeInterval = 5 // Minimum seconds between updates
     
-    @Published var location: CLLocation?
-    @Published var authorizationStatus: CLAuthorizationStatus
-    @Published var lastError: Error?
+    @Published private(set) var location: CLLocation?
+    @Published private(set) var authorizationStatus: CLAuthorizationStatus
+    @Published private(set) var lastError: Error?
     
     override init() {
-        authorizationStatus = .notDetermined
+        self.manager = CLLocationManager()
+        self.authorizationStatus = manager.authorizationStatus
+        
         super.init()
         
-        // Configure location manager
+        Task {
+            await setupLocationManager()
+        }
+    }
+    
+    private func setupLocationManager() async {
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         manager.distanceFilter = 100 // meters
         manager.pausesLocationUpdatesAutomatically = true
-        manager.allowsBackgroundLocationUpdates = false
+        manager.allowsBackgroundLocationUpdates = false     
+        
+        await MainActor.run {
+            manager.requestWhenInUseAuthorization()
+        }
     }
     
-    func requestLocation() {
-        // Don't request if we recently updated
-        if let lastUpdate = lastLocationUpdate {
-            let timeSinceLastUpdate = Date().timeIntervalSince(lastUpdate)
-            if timeSinceLastUpdate < updateThrottle {
-                print("Location update throttled. Time since last update: \(timeSinceLastUpdate)s")
-                return
+    private func startUpdatingLocation() {
+        guard !isUpdating else { return }
+        isUpdating = true
+        Task {
+            await MainActor.run {
+                manager.startUpdatingLocation()
+                print("Started updating location")
             }
         }
-        
-        lastError = nil
-        
-        // Check if location services are enabled
-        guard CLLocationManager.locationServicesEnabled() else {
-            lastError = NSError(
-                domain: "LocationManager",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Location services are disabled"]
-            )
-            return
-        }
-        
-        // Request authorization if not determined
-        if authorizationStatus == .notDetermined {
-            manager.requestWhenInUseAuthorization()
-            return
-        }
-        
-        // Start updating if authorized and not already updating
-        if (authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways) && !isUpdating {
-            isUpdating = true
-            manager.startUpdatingLocation()
-            print("Started updating location")
-        }
     }
     
-    func stopUpdatingLocation() {
+    private func stopUpdatingLocation() {
+        guard isUpdating else { return }
         isUpdating = false
-        manager.stopUpdatingLocation()
-        print("Stopped updating location")
+        Task {
+            await MainActor.run {
+                manager.stopUpdatingLocation()
+                print("Stopped updating location")
+            }
+        }
     }
     
     // MARK: - CLLocationManagerDelegate
     
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        authorizationStatus = manager.authorizationStatus
-        print("Location authorization status changed to: \(authorizationStatus.rawValue)")
-        
-        switch authorizationStatus {
-        case .authorizedWhenInUse, .authorizedAlways:
-            // Don't automatically request location, let the UI handle it
-            break
-        case .denied, .restricted:
-            stopUpdatingLocation()
-            lastError = NSError(
-                domain: "LocationManager",
-                code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Location access denied"]
-            )
-        default:
-            break
-        }
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let newLocation = locations.last else { return }
-        
-        // Filter out invalid locations
-        guard newLocation.horizontalAccuracy >= 0 else { return }
-        
-        // Only update if significant change or first location
-        if let currentLocation = location {
-            let distance = newLocation.distance(from: currentLocation)
-            if distance < 100 { // Less than 100 meters change
-                return
-            }
-        }
-        
-        location = newLocation
-        lastLocationUpdate = Date()
-        print("Location updated: \(newLocation.coordinate.latitude), \(newLocation.coordinate.longitude)")
-        
-        // Stop updates after getting a good location
-        stopUpdatingLocation()
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
-        lastError = error
-        
-        if let clError = error as? CLError {
-            switch clError.code {
-            case .denied:
-                authorizationStatus = .denied
-                stopUpdatingLocation()
-            case .locationUnknown:
-                // Only retry once
-                if isUpdating {
-                    stopUpdatingLocation()
-                }
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor in
+            self.authorizationStatus = manager.authorizationStatus
+            print("Location authorization status changed to: \(authorizationStatus.rawValue)")
+            
+            switch authorizationStatus {
+            case .authorizedWhenInUse, .authorizedAlways:
+                self.startUpdatingLocation()
+            case .denied, .restricted:
+                self.stopUpdatingLocation()
+                self.lastError = NSError(
+                    domain: "LocationManager",
+                    code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "Location access denied"]
+                )
             default:
-                print("CLError: \(clError.code)")
-                stopUpdatingLocation()
+                break
             }
-        } else {
-            stopUpdatingLocation()
+        }
+    }
+    
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let newLocation = locations.last,
+              newLocation.horizontalAccuracy >= 0 else { return }
+        
+        Task { @MainActor in
+            // Only update if significant change or first location
+            if let currentLocation = self.location {
+                let distance = newLocation.distance(from: currentLocation)
+                if distance < 100 { // Less than 100 meters change
+                    return
+                }
+            }
+            
+            self.location = newLocation
+            self.lastLocationUpdate = Date()
+            print("Location updated: \(newLocation.coordinate.latitude), \(newLocation.coordinate.longitude)")
+            
+            // Stop updates after getting a good location
+            self.stopUpdatingLocation()
+        }
+    }
+    
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in
+            print("Location error: \(error.localizedDescription)")
+            self.lastError = error
+            
+            if let clError = error as? CLError {
+                switch clError.code {
+                case .denied:
+                    self.authorizationStatus = .denied
+                    self.stopUpdatingLocation()
+                case .locationUnknown:
+                    // Only retry once
+                    if self.isUpdating {
+                        self.stopUpdatingLocation()
+                    }
+                default:
+                    print("CLError: \(clError.code)")
+                    self.stopUpdatingLocation()
+                }
+            } else {
+                self.stopUpdatingLocation()
+            }
         }
     }
 }
