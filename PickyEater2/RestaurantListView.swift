@@ -3,11 +3,46 @@ import CoreLocation
 
 struct RestaurantListView: View {
     let preferences: UserPreferences
+    @StateObject private var locationManager = LocationManager()
     @State private var restaurants: [Restaurant] = []
     @State private var isLoading = false
     @State private var error: Error?
     
     var body: some View {
+        Group {
+            switch locationManager.state {
+            case .notDetermined, .unavailable:
+                ContentUnavailableView {
+                    Label("Requesting Location Access", systemImage: locationManager.state.systemImage)
+                } description: {
+                    Text(locationManager.state.description)
+                }
+            case .restricted, .denied:
+                ContentUnavailableView {
+                    Label("Location Access Required", systemImage: locationManager.state.systemImage)
+                } description: {
+                    Text(locationManager.state.description)
+                } actions: {
+                    Button("Open Settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                }
+            case .authorized:
+                if let location = locationManager.location {
+                    restaurantList
+                } else {
+                    ProgressView("Getting your location...")
+                }
+            }
+        }
+        .background(Color.black)
+        .preferredColorScheme(.dark)
+    }
+    
+    private var restaurantList: some View {
         ScrollView {
             VStack(spacing: 20) {
                 HStack {
@@ -18,7 +53,9 @@ struct RestaurantListView: View {
                     Spacer()
                     
                     Button {
-                        // Refresh restaurants
+                        Task {
+                            await loadRestaurants(forceRefresh: true)
+                        }
                     } label: {
                         Label("NEW SELECTION", systemImage: "arrow.clockwise")
                             .font(.headline)
@@ -42,7 +79,9 @@ struct RestaurantListView: View {
                         Text(error.localizedDescription)
                     } actions: {
                         Button("Try Again") {
-                            // Retry loading
+                            Task {
+                                await loadRestaurants(forceRefresh: true)
+                            }
                         }
                         .buttonStyle(.bordered)
                     }
@@ -63,8 +102,26 @@ struct RestaurantListView: View {
             }
             .padding(.vertical)
         }
-        .background(Color.black)
-        .preferredColorScheme(.dark)
+        .task {
+            await loadRestaurants()
+        }
+    }
+    
+    private func loadRestaurants(forceRefresh: Bool = false) async {
+        guard !isLoading, let location = locationManager.location else { return }
+        
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            // TODO: Implement actual restaurant loading
+            // This is just a placeholder
+            try await Task.sleep(for: .seconds(2))
+            restaurants = []
+        } catch {
+            self.error = error
+            restaurants = []
+        }
     }
 }
 
@@ -89,7 +146,7 @@ struct RecommendedRestaurantCard: View {
             
             HStack {
                 Image(systemName: "location.fill")
-                Text("Location: Downtown")
+                Text("Location: \(restaurant.location.address1)")
             }
             .foregroundColor(.secondary)
             
@@ -115,6 +172,9 @@ struct RecommendedRestaurantCard: View {
             HStack(spacing: 12) {
                 Button {
                     // Open in Maps
+                    if let url = URL(string: "maps://?q=\(restaurant.location.address1)") {
+                        UIApplication.shared.open(url)
+                    }
                 } label: {
                     Text("FIND DIRECTIONS")
                         .font(.headline)

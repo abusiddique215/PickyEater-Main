@@ -60,11 +60,7 @@ struct ContentView: View {
     private var mainView: some View {
         NavigationStack {
             if let location = locationManager.location {
-                RestaurantListView(
-                    preferences: currentPreferences,
-                    location: location,
-                    authorizationStatus: locationManager.authorizationStatus
-                )
+                RestaurantListView(preferences: currentPreferences)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {

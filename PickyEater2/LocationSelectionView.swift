@@ -3,6 +3,7 @@ import SwiftUI
 struct LocationSelectionView: View {
     @Binding var preferences: UserPreferences
     @State private var selectedLocation: String?
+    @StateObject private var locationManager = LocationManager()
     
     private let locations = [
         "Montreal", "Laurentides", "Laval", "West Island", "South Shore"
@@ -39,25 +40,30 @@ struct LocationSelectionView: View {
                 .padding()
             }
             
-            NavigationLink {
-                RestaurantListView(preferences: preferences)
-            } label: {
-                HStack {
-                    Text("NEXT")
-                    Image(systemName: "arrow.right")
+            if let location = locationManager.location {
+                NavigationLink {
+                    RestaurantListView(preferences: preferences)
+                } label: {
+                    HStack {
+                        Text("NEXT")
+                        Image(systemName: "arrow.right")
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(selectedLocation == nil ? Color.gray : Color.white)
+                    )
+                    .foregroundColor(selectedLocation == nil ? .white : .black)
                 }
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(selectedLocation == nil ? Color.gray : Color.white)
-                )
-                .foregroundColor(selectedLocation == nil ? .white : .black)
+                .disabled(selectedLocation == nil)
+                .padding(.horizontal)
+                .padding(.bottom)
+            } else {
+                ProgressView("Getting your location...")
+                    .padding()
             }
-            .disabled(selectedLocation == nil)
-            .padding(.horizontal)
-            .padding(.bottom)
         }
         .background(Color.black)
         .preferredColorScheme(.dark)
