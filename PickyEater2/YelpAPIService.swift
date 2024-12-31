@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+@_exported import Models
 
 struct YelpAPIService {
     private let apiKey: String
@@ -25,7 +26,8 @@ struct YelpAPIService {
             URLQueryItem(name: "longitude", value: String(longitude)),
             URLQueryItem(name: "radius", value: String(radius)),
             URLQueryItem(name: "limit", value: "20"),
-            URLQueryItem(name: "sort_by", value: "distance")
+            URLQueryItem(name: "sort_by", value: "distance"),
+            URLQueryItem(name: "term", value: "restaurants")
         ]
         
         if let categories = categories, !categories.isEmpty {
