@@ -11,20 +11,25 @@ import CoreLocation
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var preferences: [UserPreferences]
+    @Query(sort: \UserPreferences.maxDistance) private var preferences: [UserPreferences]
     @StateObject private var locationManager = LocationManager()
     @State private var showingPreferences = false
     
     private var currentPreferences: UserPreferences {
-        get {
-            if let existing = preferences.first {
-                return existing
-            }
-            let new = UserPreferences()
-            modelContext.insert(new)
-            try? modelContext.save()
-            return new
+        if let existing = preferences.first {
+            return existing
         }
+        
+        // Create new preferences
+        let new = UserPreferences()
+        modelContext.insert(new)
+        do {
+            try modelContext.save()
+            print("Created new preferences with id: \(new.id)")
+        } catch {
+            print("Failed to save preferences: \(error)")
+        }
+        return new
     }
     
     var body: some View {
@@ -59,7 +64,7 @@ struct ContentView: View {
     @ViewBuilder
     private var mainView: some View {
         NavigationStack {
-            if let location = locationManager.location {
+            if locationManager.location != nil {
                 RestaurantListView(preferences: currentPreferences)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {

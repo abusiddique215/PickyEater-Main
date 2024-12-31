@@ -40,7 +40,7 @@ struct LocationSelectionView: View {
                 .padding()
             }
             
-            if let location = locationManager.location {
+            if locationManager.location != nil {
                 NavigationLink {
                     RestaurantListView(preferences: preferences)
                 } label: {

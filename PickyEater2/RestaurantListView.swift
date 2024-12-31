@@ -31,7 +31,7 @@ struct RestaurantListView: View {
                     .buttonStyle(.bordered)
                 }
             case .authorized:
-                if let location = locationManager.location {
+                if locationManager.location != nil {
                     restaurantList
                 } else {
                     ProgressView("Getting your location...")
@@ -108,16 +108,17 @@ struct RestaurantListView: View {
     }
     
     private func loadRestaurants(forceRefresh: Bool = false) async {
-        guard !isLoading, let location = locationManager.location else { return }
+        guard !isLoading else { return }
+        guard let location = locationManager.location else { return }
         
         isLoading = true
         defer { isLoading = false }
         
         do {
-            // TODO: Implement actual restaurant loading
-            // This is just a placeholder
-            try await Task.sleep(for: .seconds(2))
-            restaurants = []
+            restaurants = try await RestaurantService.shared.searchRestaurants(
+                near: location,
+                preferences: preferences
+            )
         } catch {
             self.error = error
             restaurants = []
@@ -146,9 +147,23 @@ struct RecommendedRestaurantCard: View {
             
             HStack {
                 Image(systemName: "location.fill")
-                Text("Location: \(restaurant.location.address1)")
+                Text("\(restaurant.location.address1), \(restaurant.location.city)")
             }
             .foregroundColor(.secondary)
+            
+            HStack {
+                Image(systemName: "star.fill")
+                    .foregroundColor(.yellow)
+                Text(String(format: "%.1f", restaurant.rating))
+                Text("(\(restaurant.reviewCount) reviews)")
+                    .foregroundColor(.secondary)
+                if let price = restaurant.price {
+                    Text("•")
+                        .foregroundColor(.secondary)
+                    Text(price)
+                        .foregroundColor(.green)
+                }
+            }
             
             HStack {
                 Image(systemName: "fork.knife")
@@ -156,7 +171,7 @@ struct RecommendedRestaurantCard: View {
             }
             .foregroundColor(.secondary)
             
-            if let photos = restaurant.photos, let firstPhoto = photos.first {
+            if let firstPhoto = restaurant.photos.first {
                 AsyncImage(url: URL(string: firstPhoto)) { image in
                     image
                         .resizable()
@@ -169,10 +184,19 @@ struct RecommendedRestaurantCard: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             
+            if let phone = restaurant.displayPhone {
+                HStack {
+                    Image(systemName: "phone.fill")
+                    Text(phone)
+                }
+                .foregroundColor(.secondary)
+            }
+            
             HStack(spacing: 12) {
                 Button {
                     // Open in Maps
-                    if let url = URL(string: "maps://?q=\(restaurant.location.address1)") {
+                    let query = "\(restaurant.location.address1), \(restaurant.location.city)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+                    if let url = URL(string: "maps://?q=\(query)") {
                         UIApplication.shared.open(url)
                     }
                 } label: {

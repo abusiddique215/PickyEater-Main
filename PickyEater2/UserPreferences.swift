@@ -3,10 +3,11 @@ import SwiftData
 
 @Model
 final class UserPreferences {
-    var maxDistance: Double = 5.0
-    var priceRange: String = "$$"
-    private var dietaryRestrictionsData: Data = Data()
-    private var cuisinePreferencesData: Data = Data()
+    var id: String
+    var maxDistance: Double
+    var priceRange: String
+    private var dietaryRestrictionsData: Data
+    private var cuisinePreferencesData: Data
     
     var dietaryRestrictions: [String] {
         get {
@@ -26,12 +27,11 @@ final class UserPreferences {
         }
     }
     
-    init() {}
-    
-    init(maxDistance: Double, priceRange: String, dietaryRestrictions: [String], cuisinePreferences: [String]) {
-        self.maxDistance = maxDistance
-        self.priceRange = priceRange
-        self.dietaryRestrictions = dietaryRestrictions
-        self.cuisinePreferences = cuisinePreferences
+    init() {
+        self.id = UUID().uuidString
+        self.maxDistance = 5.0
+        self.priceRange = "$$"
+        self.dietaryRestrictionsData = Data()
+        self.cuisinePreferencesData = Data()
     }
 } 

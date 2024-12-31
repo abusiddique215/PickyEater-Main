@@ -23,7 +23,8 @@ struct PickyEater2App: App {
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                .modelContainer(modelContainer)
+                .preferredColorScheme(.dark)
         }
-        .modelContainer(modelContainer)
     }
 }
