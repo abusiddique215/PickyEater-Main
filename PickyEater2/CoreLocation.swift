@@ -8,120 +8,78 @@ enum LocationState: Equatable {
     case authorized
     case unavailable
     
+    var systemImage: String {
+        switch self {
+        case .notDetermined: "location.slash"
+        case .restricted: "lock.shield"
+        case .denied: "location.slash.fill"
+        case .authorized: "location.fill"
+        case .unavailable: "exclamationmark.triangle"
+        }
+    }
+    
     var description: String {
         switch self {
         case .notDetermined:
             "Please allow location access to find restaurants near you"
-        case .restricted, .denied:
-            "Location access is required to find restaurants near you. Please enable it in Settings."
+        case .restricted:
+            "Location access is restricted. Please check your device settings."
+        case .denied:
+            "Location access was denied. Please enable it in Settings to use this feature."
         case .authorized:
-            "Finding your location..."
+            "Location access granted"
         case .unavailable:
-            "Location services are unavailable"
-        }
-    }
-    
-    var systemImage: String {
-        switch self {
-        case .notDetermined, .authorized:
-            "location.circle"
-        case .restricted, .denied:
-            "location.slash.circle"
-        case .unavailable:
-            "exclamationmark.triangle"
+            "Location services are currently unavailable"
         }
     }
 }
 
 @MainActor
-final class LocationManager: NSObject, ObservableObject {
-    private let manager: CLLocationManager
+class LocationManager: NSObject, ObservableObject {
+    @Published var location: CLLocation?
+    @Published var state: LocationState = .notDetermined
     
-    @Published private(set) var location: CLLocation?
-    @Published private(set) var state: LocationState = .notDetermined
-    @Published private(set) var lastError: Error?
+    private let manager = CLLocationManager()
     
     override init() {
-        self.manager = CLLocationManager()
         super.init()
-        
-        self.manager.delegate = self
-        self.manager.desiredAccuracy = kCLLocationAccuracyBest
-        self.manager.distanceFilter = kCLDistanceFilterNone
-        self.manager.pausesLocationUpdatesAutomatically = false
-        
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
         Task {
             await requestLocationPermission()
         }
     }
     
-    private func requestLocationPermission() {
+    private func requestLocationPermission() async {
         switch manager.authorizationStatus {
         case .notDetermined:
             manager.requestWhenInUseAuthorization()
-        case .restricted, .denied:
+        case .restricted:
+            state = .restricted
+        case .denied:
             state = .denied
-        case .authorizedWhenInUse, .authorizedAlways:
+        case .authorizedAlways, .authorizedWhenInUse:
             state = .authorized
             manager.startUpdatingLocation()
         @unknown default:
             state = .unavailable
         }
     }
-    
-    func startUpdatingLocation() {
-        manager.startUpdatingLocation()
-    }
-    
-    func stopUpdatingLocation() {
-        manager.stopUpdatingLocation()
-    }
 }
 
 extension LocationManager: CLLocationManagerDelegate {
-    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in
-            switch manager.authorizationStatus {
-            case .notDetermined:
-                state = .notDetermined
-            case .restricted:
-                state = .restricted
-            case .denied:
-                state = .denied
-            case .authorizedWhenInUse, .authorizedAlways:
-                state = .authorized
-                manager.startUpdatingLocation()
-            @unknown default:
-                state = .unavailable
-            }
+            await requestLocationPermission()
         }
     }
     
-    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
-        
-        Task { @MainActor in
-            // Only update if accuracy is good enough
-            if location.horizontalAccuracy <= 100 {
-                self.location = location
-                self.lastError = nil
-            }
-        }
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        location = locations.last
     }
     
-    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        Task { @MainActor in
-            self.lastError = error
-            if let error = error as? CLError {
-                switch error.code {
-                case .denied:
-                    state = .denied
-                case .locationUnknown:
-                    state = .unavailable
-                default:
-                    print("Location manager failed with error: \(error.localizedDescription)")
-                }
-            }
-        }
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location manager failed with error: \(error.localizedDescription)")
+        state = .unavailable
     }
 } 

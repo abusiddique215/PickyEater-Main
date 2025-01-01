@@ -17,14 +17,22 @@ struct RestaurantMapView: View {
     }
     
     var body: some View {
-        Map(coordinateRegion: $mapRegion, showsUserLocation: true) {
-            // Add restaurant markers
-            ForEach(restaurants) { restaurant in
-                Marker(restaurant.name, coordinate: CLLocationCoordinate2D(
+        Map(coordinateRegion: $mapRegion,
+            annotationItems: restaurants) { restaurant in
+            MapAnnotation(
+                coordinate: CLLocationCoordinate2D(
                     latitude: restaurant.location.latitude,
                     longitude: restaurant.location.longitude
-                ))
-                .tint(selectedRestaurant?.id == restaurant.id ? .pink : .blue)
+                )
+            ) {
+                Image(systemName: "mappin.circle.fill")
+                    .font(.title)
+                    .foregroundColor(selectedRestaurant?.id == restaurant.id ? .pink : .blue)
+                    .onTapGesture {
+                        withAnimation {
+                            selectedRestaurant = restaurant
+                        }
+                    }
             }
         }
         .mapStyle(theme == .dark ? 
