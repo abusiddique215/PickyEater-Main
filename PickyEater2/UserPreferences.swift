@@ -1,4 +1,3 @@
-import Foundation
 import SwiftUI
 import SwiftData
 
@@ -16,37 +15,23 @@ enum AppTheme: String, Codable {
 
 @Model
 final class UserPreferences {
-    var id: String
-    var maxDistance: Double
-    var priceRange: String
-    private var dietaryRestrictionsData: Data
-    private var cuisinePreferencesData: Data
+    var maxDistance: Int
+    var priceRange: [Int]
+    var dietaryRestrictions: [String]
+    var cuisinePreferences: [String]
     var theme: AppTheme
     
-    var dietaryRestrictions: [String] {
-        get {
-            (try? JSONDecoder().decode([String].self, from: dietaryRestrictionsData)) ?? []
-        }
-        set {
-            dietaryRestrictionsData = (try? JSONEncoder().encode(newValue)) ?? Data()
-        }
-    }
-    
-    var cuisinePreferences: [String] {
-        get {
-            (try? JSONDecoder().decode([String].self, from: cuisinePreferencesData)) ?? []
-        }
-        set {
-            cuisinePreferencesData = (try? JSONEncoder().encode(newValue)) ?? Data()
-        }
-    }
-    
-    init() {
-        self.id = UUID().uuidString
-        self.maxDistance = 5.0
-        self.priceRange = "$$"
-        self.dietaryRestrictionsData = Data()
-        self.cuisinePreferencesData = Data()
-        self.theme = .system
+    init(
+        maxDistance: Int = 5,
+        priceRange: [Int] = [1, 2, 3],
+        dietaryRestrictions: [String] = [],
+        cuisinePreferences: [String] = [],
+        theme: AppTheme = .system
+    ) {
+        self.maxDistance = maxDistance
+        self.priceRange = priceRange
+        self.dietaryRestrictions = dietaryRestrictions
+        self.cuisinePreferences = cuisinePreferences
+        self.theme = theme
     }
 } 
