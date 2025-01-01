@@ -39,20 +39,23 @@ class LocationManager: NSObject, ObservableObject {
     @Published var location: CLLocation?
     @Published var state: LocationState = .notDetermined
     
-    private let manager = CLLocationManager()
+    private let manager: CLLocationManager
     
     override init() {
+        self.manager = CLLocationManager()
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
+        
         Task {
-            await requestLocationPermission()
+            await checkLocationAuthorization()
         }
     }
     
-    private func requestLocationPermission() async {
+    private func checkLocationAuthorization() {
         switch manager.authorizationStatus {
         case .notDetermined:
+            state = .notDetermined
             manager.requestWhenInUseAuthorization()
         case .restricted:
             state = .restricted
@@ -68,18 +71,23 @@ class LocationManager: NSObject, ObservableObject {
 }
 
 extension LocationManager: CLLocationManagerDelegate {
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in
-            await requestLocationPermission()
+            checkLocationAuthorization()
         }
     }
     
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        location = locations.last
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        Task { @MainActor in
+            self.location = location
+        }
     }
     
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location manager failed with error: \(error.localizedDescription)")
-        state = .unavailable
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in
+            print("Location manager failed with error: \(error.localizedDescription)")
+            state = .unavailable
+        }
     }
 } 
