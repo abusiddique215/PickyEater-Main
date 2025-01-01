@@ -44,14 +44,14 @@ struct MainTabView: View {
             }
             
             NavigationStack {
-                Text("Settings Coming Soon")
-                    .navigationTitle("Settings")
+                SettingsView()
             }
             .tag(3)
             .tabItem {
                 Label("Settings", systemImage: "gearshape.fill")
             }
         }
+        .preferredColorScheme(currentPreferences.theme.colorScheme)
         .task {
             // Ensure preferences exist
             if preferences.isEmpty {
