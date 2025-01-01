@@ -138,7 +138,7 @@ class YelpAPIService {
         print("🔄 Retrying search with \(radius)m radius...")
         // Create a copy of preferences and modify the radius
         var modifiedPreferences = preferences
-        modifiedPreferences.maxDistance = Double(radius) / 1000.0 // Convert to kilometers
+        modifiedPreferences.maxDistance = radius / 1000 // Convert meters to kilometers as integer
         return try await searchRestaurants(near: location, preferences: modifiedPreferences)
     }
     
