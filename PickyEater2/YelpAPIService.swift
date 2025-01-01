@@ -136,9 +136,14 @@ class YelpAPIService {
         radius: Int = 5000
     ) async throws -> [Restaurant] {
         print("🔄 Retrying search with \(radius)m radius...")
-        // Create a copy of preferences and modify the radius
-        var modifiedPreferences = preferences
-        modifiedPreferences.maxDistance = radius / 1000 // Convert meters to kilometers as integer
+        // Create new preferences with modified radius
+        let modifiedPreferences = UserPreferences(
+            maxDistance: radius / 1000,
+            priceRange: preferences.priceRange,
+            dietaryRestrictions: preferences.dietaryRestrictions,
+            cuisinePreferences: preferences.cuisinePreferences,
+            theme: preferences.theme
+        )
         return try await searchRestaurants(near: location, preferences: modifiedPreferences)
     }
     
