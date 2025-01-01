@@ -57,7 +57,7 @@ struct PreferencesView: View {
         Section(header: Text("Price Range")) {
             Picker("Price Range", selection: $preferences.priceRange) {
                 ForEach(PriceRange.allCases, id: \.self) { price in
-                    Text(price.displayText).tag([price.rawValue])
+                    Text(price.displayText).tag(price.rawValue)
                 }
             }
             .pickerStyle(.segmented)

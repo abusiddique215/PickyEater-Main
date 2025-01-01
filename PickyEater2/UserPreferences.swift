@@ -16,14 +16,14 @@ enum AppTheme: String, Codable {
 @Model
 final class UserPreferences {
     var maxDistance: Int
-    var priceRange: [Int]
-    var dietaryRestrictions: [String]
-    var cuisinePreferences: [String]
+    var priceRange: Int
+    @Attribute(.transformable) var dietaryRestrictions: [String]
+    @Attribute(.transformable) var cuisinePreferences: [String]
     var theme: AppTheme
     
     init(
         maxDistance: Int = 5,
-        priceRange: [Int] = [1, 2, 3],
+        priceRange: Int = 2,
         dietaryRestrictions: [String] = [],
         cuisinePreferences: [String] = [],
         theme: AppTheme = .system

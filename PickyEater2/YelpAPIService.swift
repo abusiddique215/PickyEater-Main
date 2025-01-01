@@ -41,7 +41,12 @@ class YelpAPIService {
             throw YelpAPIError.invalidLocation
         }
         
-        print("📍 Location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+        print("📍 Starting restaurant search:")
+        print("- Location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+        print("- Max Distance: \(preferences.maxDistance)km")
+        print("- Price Range: \(preferences.priceRange)")
+        print("- Dietary Restrictions: \(preferences.dietaryRestrictions)")
+        print("- Cuisine Preferences: \(preferences.cuisinePreferences)")
         
         // Verify API key
         guard !apiKey.isEmpty else {
@@ -50,7 +55,7 @@ class YelpAPIService {
         }
         
         // Build URL with explicit integer radius
-        let radiusInMeters: Int = 1000 // Fixed 1km radius, explicitly typed as Int
+        let radiusInMeters: Int = preferences.maxDistance * 1000 // Convert km to meters
         let latitude = String(format: "%.6f", location.coordinate.latitude)
         let longitude = String(format: "%.6f", location.coordinate.longitude)
         
@@ -59,11 +64,19 @@ class YelpAPIService {
         components.queryItems = [
             URLQueryItem(name: "latitude", value: latitude),
             URLQueryItem(name: "longitude", value: longitude),
-            URLQueryItem(name: "radius", value: String(radiusInMeters)), // Convert Int directly to String
+            URLQueryItem(name: "radius", value: String(radiusInMeters)),
             URLQueryItem(name: "term", value: "restaurants"),
             URLQueryItem(name: "limit", value: "20"),
-            URLQueryItem(name: "sort_by", value: "distance")
+            URLQueryItem(name: "sort_by", value: "distance"),
+            URLQueryItem(name: "price", value: String(preferences.priceRange))
         ]
+        
+        // Add cuisine preferences if any
+        if !preferences.cuisinePreferences.isEmpty {
+            components.queryItems?.append(
+                URLQueryItem(name: "categories", value: preferences.cuisinePreferences.joined(separator: ","))
+            )
+        }
         
         guard let url = components.url else {
             print("❌ Failed to construct URL")
@@ -74,11 +87,9 @@ class YelpAPIService {
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         
-        print("🔍 Debug Info:")
-        print("📍 Location: \(latitude), \(longitude)")
-        print("📏 Radius: \(radiusInMeters) meters (integer)")
-        print("🔗 URL: \(url)")
-        print("🔑 Using API Key: \(apiKey.prefix(6))...")
+        print("🔍 API Request Details:")
+        print("- URL: \(url)")
+        print("- Headers: \(request.allHTTPHeaderFields ?? [:])")
         
         do {
             let (data, response) = try await session.data(for: request)
