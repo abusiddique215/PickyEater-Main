@@ -35,7 +35,11 @@ struct SettingsView: View {
                 
                 Section {
                     NavigationLink {
-                        CuisineSelectionView(preferences: .constant(currentPreferences))
+                        let preferences = currentPreferences
+                        CuisineSelectionView(preferences: Binding(
+                            get: { preferences },
+                            set: { _ in }
+                        ))
                     } label: {
                         HStack {
                             Text("Cuisine Preferences")
@@ -63,14 +67,14 @@ struct SettingsView: View {
                     HStack {
                         Text("Maximum Distance")
                         Spacer()
-                        Text("\(Int(currentPreferences.maxDistance)) km")
+                        Text("\(currentPreferences.maxDistance) km")
                             .foregroundColor(.secondary)
                     }
                     
                     HStack {
                         Text("Price Range")
                         Spacer()
-                        Text(currentPreferences.priceRange)
+                        Text("\(currentPreferences.priceRange.count) selected")
                             .foregroundColor(.secondary)
                     }
                 } header: {
