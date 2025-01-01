@@ -5,6 +5,7 @@ struct MainTabView: View {
     @State private var selectedTab = 0
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \UserPreferences.maxDistance) private var preferences: [UserPreferences]
+    @State private var currentTheme: AppTheme = .system
     
     private var currentPreferences: UserPreferences {
         if let existing = preferences.first {
@@ -51,14 +52,20 @@ struct MainTabView: View {
                 Label("Settings", systemImage: "gearshape.fill")
             }
         }
-        .preferredColorScheme(currentPreferences.theme.colorScheme)
+        .modifier(ThemeModifier(theme: currentTheme))
+        .onChange(of: currentPreferences.theme) { _, newTheme in
+            withAnimation {
+                currentTheme = newTheme
+            }
+        }
         .task {
-            // Ensure preferences exist
+            // Ensure preferences exist and set initial theme
             if preferences.isEmpty {
                 let new = UserPreferences()
                 modelContext.insert(new)
                 try? modelContext.save()
             }
+            currentTheme = currentPreferences.theme
         }
     }
 }

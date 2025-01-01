@@ -7,6 +7,8 @@ struct RestaurantListView: View {
     @State private var restaurants: [Restaurant] = []
     @State private var isLoading = false
     @State private var error: Error?
+    @State private var showingMap = false
+    @Environment(\.appTheme) private var theme
     
     var body: some View {
         Group {
@@ -38,8 +40,7 @@ struct RestaurantListView: View {
                 }
             }
         }
-        .background(Color.black)
-        .preferredColorScheme(.dark)
+        .background(theme == .dark ? Color.black : Color.white)
     }
     
     private var restaurantList: some View {
@@ -51,6 +52,18 @@ struct RestaurantListView: View {
                         .foregroundColor(.secondary)
                     
                     Spacer()
+                    
+                    Button {
+                        showingMap.toggle()
+                    } label: {
+                        Label("Map View", systemImage: "map")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.blue)
+                            .clipShape(Capsule())
+                    }
                     
                     Button {
                         Task {
@@ -102,6 +115,26 @@ struct RestaurantListView: View {
             }
             .padding(.vertical)
         }
+        .sheet(isPresented: $showingMap) {
+            if let location = locationManager.location {
+                NavigationStack {
+                    RestaurantMapView(
+                        restaurants: restaurants,
+                        centerCoordinate: location.coordinate
+                    )
+                    .navigationTitle("Nearby Restaurants")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") {
+                                showingMap = false
+                            }
+                        }
+                    }
+                }
+                .presentationDragIndicator(.visible)
+            }
+        }
         .task {
             await loadRestaurants()
         }
@@ -129,6 +162,7 @@ struct RestaurantListView: View {
 struct RecommendedRestaurantCard: View {
     let restaurant: Restaurant
     @State private var isFavorite = false
+    @Environment(\.appTheme) private var theme
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -228,11 +262,11 @@ struct RecommendedRestaurantCard: View {
                 .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding()
-        .background(Color.black)
+        .background(theme == .dark ? Color.black : Color.white)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .stroke(theme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.1), lineWidth: 1)
         )
     }
 }
