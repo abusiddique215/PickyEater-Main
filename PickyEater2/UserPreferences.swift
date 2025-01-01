@@ -17,8 +17,10 @@ enum AppTheme: String, Codable {
 final class UserPreferences {
     var maxDistance: Int
     var priceRange: Int
-    @Attribute(.transformable) var dietaryRestrictions: [String]
-    @Attribute(.transformable) var cuisinePreferences: [String]
+    @Attribute(transform: StringArrayTransformer())
+    var dietaryRestrictions: [String]
+    @Attribute(transform: StringArrayTransformer())
+    var cuisinePreferences: [String]
     var theme: AppTheme
     
     init(
@@ -33,5 +35,26 @@ final class UserPreferences {
         self.dietaryRestrictions = dietaryRestrictions
         self.cuisinePreferences = cuisinePreferences
         self.theme = theme
+    }
+}
+
+// MARK: - Value Transformers
+class StringArrayTransformer: ValueTransformer {
+    override class func transformedValueClass() -> AnyClass {
+        NSArray.self
+    }
+    
+    override class func allowsReverseTransformation() -> Bool {
+        true
+    }
+    
+    override func transformedValue(_ value: Any?) -> Any? {
+        guard let array = value as? [String] else { return nil }
+        return array as NSArray
+    }
+    
+    override func reverseTransformedValue(_ value: Any?) -> Any? {
+        guard let array = value as? NSArray else { return nil }
+        return array as? [String]
     }
 } 

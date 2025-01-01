@@ -10,21 +10,15 @@ import SwiftData
 
 @main
 struct PickyEater2App: App {
-    let modelContainer: ModelContainer
-    
     init() {
-        do {
-            modelContainer = try ModelContainer(for: UserPreferences.self)
-        } catch {
-            fatalError("Could not initialize ModelContainer: \(error)")
-        }
+        // Register value transformers
+        TransformerSetup.register()
     }
     
     var body: some Scene {
         WindowGroup {
             MainTabView()
-                .modelContainer(modelContainer)
-                .preferredColorScheme(.dark)
         }
+        .modelContainer(for: UserPreferences.self)
     }
 }
