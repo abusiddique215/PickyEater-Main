@@ -10,51 +10,51 @@ enum YelpAPIError: Error {
     case invalidLocation
 }
 
-actor YelpAPIService {
-    private let apiKey: String
-    private let session: URLSession
+class YelpAPIService {
+    static let shared = YelpAPIService()
     private let baseURL = "https://api.yelp.com/v3"
-    private let decoder: JSONDecoder
+    private let session: URLSession
+    private let decoder = JSONDecoder()
     
-    init(apiKey: String) {
-        self.apiKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+    private init() {
         let config = URLSessionConfiguration.default
-        config.httpAdditionalHeaders = [
-            "Authorization": "Bearer \(apiKey)",
-            "Accept": "application/json"
-        ]
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 300
-        config.waitsForConnectivity = true
-        
         self.session = URLSession(configuration: config)
-        self.decoder = JSONDecoder()
     }
     
-    func searchRestaurants(latitude: Double, longitude: Double, radius: Int = 5000, categories: [String]? = nil) async throws -> [YelpRestaurant] {
-        // Validate coordinates
-        guard CLLocationCoordinate2D(latitude: latitude, longitude: longitude).isValid else {
-            print("❌ Invalid coordinates: lat=\(latitude), lon=\(longitude)")
-            throw YelpAPIError.invalidLocation
-        }
-        
+    func searchRestaurants(
+        near location: CLLocation,
+        preferences: UserPreferences
+    ) async throws -> [Restaurant] {
         var components = URLComponents(string: "\(baseURL)/businesses/search")!
         
-        var queryItems = [
-            URLQueryItem(name: "latitude", value: String(latitude)),
-            URLQueryItem(name: "longitude", value: String(longitude)),
-            URLQueryItem(name: "radius", value: String(radius)),
-            URLQueryItem(name: "limit", value: "20"),
+        // Convert price range to Yelp format (1,2,3,4)
+        let priceFilter = preferences.priceRange.map { String($0) }.joined(separator: ",")
+        
+        // Calculate radius in meters (as integer)
+        let radiusInMeters = Int(round(min(40000, preferences.maxDistance * 1000)))
+        
+        // Parameters
+        components.queryItems = [
+            URLQueryItem(name: "latitude", value: String(format: "%.6f", location.coordinate.latitude)),
+            URLQueryItem(name: "longitude", value: String(format: "%.6f", location.coordinate.longitude)),
+            URLQueryItem(name: "radius", value: "\(radiusInMeters)"), // Use string interpolation for clean integer
+            URLQueryItem(name: "categories", value: "restaurants"),
+            URLQueryItem(name: "limit", value: "50"), // Maximum allowed by Yelp
             URLQueryItem(name: "sort_by", value: "distance"),
-            URLQueryItem(name: "term", value: "restaurants")
+            URLQueryItem(name: "open_now", value: "true")
         ]
         
-        if let categories = categories, !categories.isEmpty {
-            queryItems.append(URLQueryItem(name: "categories", value: categories.joined(separator: ",")))
+        // Add optional filters
+        if !priceFilter.isEmpty {
+            components.queryItems?.append(URLQueryItem(name: "price", value: priceFilter))
         }
         
-        components.queryItems = queryItems
+        if !preferences.cuisinePreferences.isEmpty {
+            let categories = preferences.cuisinePreferences.joined(separator: ",").lowercased()
+            components.queryItems?.append(URLQueryItem(name: "categories", value: categories))
+        }
         
         guard let url = components.url else {
             print("❌ Failed to construct URL with components: \(components)")
@@ -62,55 +62,51 @@ actor YelpAPIService {
         }
         
         var request = URLRequest(url: url)
-        request.httpMethod = "GET"
+        request.setValue("Bearer \(Config.yelpAPIKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
         
-        print("🔍 Searching restaurants near: lat=\(latitude), lon=\(longitude), radius=\(radius)m")
-        if let categories = categories, !categories.isEmpty {
-            print("📋 Categories: \(categories.joined(separator: ", "))")
-        }
+        print("🔍 Searching restaurants near: lat=\(location.coordinate.latitude), lon=\(location.coordinate.longitude), radius=\(radiusInMeters)m")
+        print("🔗 URL: \(url)")
         
-        // Implement retry logic
-        let maxRetries = 3
-        var lastError: Error?
-        
-        for attempt in 1...maxRetries {
-            do {
-                let (data, response) = try await session.data(for: request)
-                
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    throw YelpAPIError.invalidResponse
-                }
-                
-                guard httpResponse.statusCode == 200 else {
-                    print("❌ HTTP Error: \(httpResponse.statusCode)")
-                    if let errorString = String(data: data, encoding: .utf8) {
-                        print("Error response: \(errorString)")
-                    }
-                    throw YelpAPIError.invalidResponse
-                }
-                
-                let searchResponse = try decoder.decode(YelpSearchResponse.self, from: data)
-                print("✅ Found \(searchResponse.businesses.count) restaurants")
-                return searchResponse.businesses
-                
-            } catch {
-                lastError = error
-                print("❌ Attempt \(attempt) failed: \(error.localizedDescription)")
-                if attempt < maxRetries {
-                    let delay = Double(attempt) * 2
-                    try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                    print("🔄 Retrying... (Attempt \(attempt + 1) of \(maxRetries))")
-                }
+        do {
+            let (data, response) = try await session.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ Invalid response type")
+                throw YelpAPIError.invalidResponse
             }
+            
+            if let errorString = String(data: data, encoding: .utf8) {
+                print("📡 Response (\(httpResponse.statusCode)): \(errorString)")
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                throw YelpAPIError.invalidResponse
+            }
+            
+            let searchResponse = try decoder.decode(RestaurantSearchResponse.self, from: data)
+            print("✅ Found \(searchResponse.businesses.count) restaurants")
+            
+            if searchResponse.businesses.isEmpty {
+                print("⚠️ No restaurants found, falling back to Apple Maps...")
+                return try await searchWithAppleMaps(near: location)
+            }
+            
+            return searchResponse.businesses
+        } catch {
+            print("❌ Search failed: \(error.localizedDescription)")
+            print("⚠️ Falling back to Apple Maps...")
+            return try await searchWithAppleMaps(near: location)
         }
-        
-        throw YelpAPIError.networkError(lastError ?? YelpAPIError.noData)
     }
     
     // Fallback to Apple Maps search if Yelp API fails
-    func searchWithAppleMaps(latitude: Double, longitude: Double, radius: Int = 5000) async throws -> [MKMapItem] {
-        let location = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-        let region = MKCoordinateRegion(center: location, latitudinalMeters: Double(radius), longitudinalMeters: Double(radius))
+    func searchWithAppleMaps(near location: CLLocation, radius: Int = 5000) async throws -> [Restaurant] {
+        let region = MKCoordinateRegion(
+            center: location.coordinate,
+            latitudinalMeters: Double(radius),
+            longitudinalMeters: Double(radius)
+        )
         
         let searchRequest = MKLocalSearch.Request()
         searchRequest.naturalLanguageQuery = "restaurants"
@@ -120,119 +116,29 @@ actor YelpAPIService {
         let response = try await search.start()
         
         print("🗺 Found \(response.mapItems.count) restaurants using Apple Maps")
-        return response.mapItems
-    }
-}
-
-// MARK: - Yelp API Response Models
-struct YelpSearchResponse: Codable {
-    let businesses: [YelpRestaurant]
-    let total: Int
-}
-
-struct YelpRestaurant: Codable, Identifiable {
-    let id: String
-    let name: String
-    let imageURL: URL?
-    let url: URL
-    let reviewCount: Int
-    let categories: [YelpCategory]
-    let rating: Double
-    let coordinates: YelpCoordinates
-    let price: String?
-    let location: YelpLocation
-    let phone: String?
-    let displayPhone: String?
-    let distance: Double?
-    
-    enum CodingKeys: String, CodingKey {
-        case id, name, url, categories, rating, coordinates, price, location, phone, distance
-        case imageURL = "image_url"
-        case reviewCount = "review_count"
-        case displayPhone = "display_phone"
-    }
-}
-
-struct YelpCategory: Codable {
-    let alias: String
-    let title: String
-}
-
-struct YelpCoordinates: Codable {
-    let latitude: Double
-    let longitude: Double
-}
-
-struct YelpLocation: Codable {
-    let address1: String?
-    let address2: String?
-    let address3: String?
-    let city: String
-    let zipCode: String
-    let country: String
-    let state: String
-    let displayAddress: [String]
-    
-    enum CodingKeys: String, CodingKey {
-        case address1, address2, address3, city, country, state
-        case zipCode = "zip_code"
-        case displayAddress = "display_address"
-    }
-}
-
-// MARK: - Helpers
-extension CLLocationCoordinate2D {
-    var isValid: Bool {
-        latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180
-    }
-}
-
-// MARK: - Conversion to App Models
-extension YelpRestaurant {
-    func toRestaurant() -> Restaurant {
-        Restaurant(
-            id: id,
-            name: name,
-            location: Location(
-                address1: location.address1 ?? "",
-                city: location.city,
-                state: location.state,
-                country: location.country,
-                latitude: coordinates.latitude,
-                longitude: coordinates.longitude,
-                zipCode: location.zipCode
-            ),
-            categories: categories.map { Category(alias: $0.alias, title: $0.title) },
-            photos: [imageURL?.absoluteString].compactMap { $0 },
-            rating: rating,
-            reviewCount: reviewCount,
-            price: price,
-            displayPhone: displayPhone
-        )
-    }
-}
-
-// MARK: - Apple Maps Conversion
-extension MKMapItem {
-    func toRestaurant() -> Restaurant {
-        Restaurant(
-            id: placemark.title ?? UUID().uuidString,
-            name: name ?? "Unknown Restaurant",
-            location: Location(
-                address1: placemark.thoroughfare ?? "",
-                city: placemark.locality ?? "",
-                state: placemark.administrativeArea ?? "",
-                country: placemark.country ?? "",
-                latitude: placemark.coordinate.latitude,
-                longitude: placemark.coordinate.longitude,
-                zipCode: placemark.postalCode
-            ),
-            categories: [], // Apple Maps doesn't provide detailed categories
-            photos: [], // Apple Maps doesn't provide photos
-            rating: 0, // Apple Maps doesn't provide ratings
-            reviewCount: 0,
-            price: nil,
-            displayPhone: phoneNumber
-        )
+        
+        let jsonData = try JSONSerialization.data(withJSONObject: response.mapItems.map { mapItem in
+            [
+                "id": mapItem.placemark.title ?? UUID().uuidString,
+                "name": mapItem.name ?? "Unknown Restaurant",
+                "location": [
+                    "address1": mapItem.placemark.thoroughfare ?? "",
+                    "city": mapItem.placemark.locality ?? "",
+                    "state": mapItem.placemark.administrativeArea ?? "",
+                    "country": mapItem.placemark.country ?? "",
+                    "lat": mapItem.placemark.coordinate.latitude,
+                    "lng": mapItem.placemark.coordinate.longitude,
+                    "zip_code": mapItem.placemark.postalCode ?? ""
+                ],
+                "categories": [] as [[String: String]],
+                "image_url": "",
+                "rating": 0,
+                "review_count": 0,
+                "price": NSNull(),
+                "display_phone": mapItem.phoneNumber ?? ""
+            ] as [String: Any]
+        })
+        
+        return try decoder.decode([Restaurant].self, from: jsonData)
     }
 } 

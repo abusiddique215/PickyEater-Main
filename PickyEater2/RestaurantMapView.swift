@@ -23,11 +23,8 @@ struct RestaurantMapView: View {
                     latitude: restaurant.location.latitude,
                     longitude: restaurant.location.longitude
                 )
-                Marker(coordinate: coordinate) {
-                    Image(systemName: "mappin")
-                        .foregroundStyle(selectedRestaurant?.id == restaurant.id ? .pink : .blue)
-                }
-                .tag(restaurant.id)
+                Marker(restaurant.name, coordinate: coordinate)
+                    .tint(selectedRestaurant?.id == restaurant.id ? .pink : .blue)
             }
         }
         .mapStyle(theme == .dark ? 
@@ -167,28 +164,35 @@ struct RestaurantPreviewCard: View {
 }
 
 #Preview {
-    RestaurantMapView(
-        restaurants: [
-            Restaurant(
-                id: "1",
-                name: "Test Restaurant",
-                location: Location(
-                    address1: "123 Main St",
-                    city: "San Francisco",
-                    state: "CA",
-                    country: "US",
-                    latitude: 37.7749,
-                    longitude: -122.4194,
-                    zipCode: "94105"
-                ),
-                categories: [Category(alias: "italian", title: "Italian")],
-                photos: [],
-                rating: 4.5,
-                reviewCount: 100,
-                price: "$$$",
-                displayPhone: "(123) 456-7890"
-            )
+    let sampleRestaurant = try! JSONDecoder().decode(Restaurant.self, from: """
+    {
+        "id": "1",
+        "name": "Test Restaurant",
+        "location": {
+            "address1": "123 Main St",
+            "city": "San Francisco",
+            "state": "CA",
+            "country": "US",
+            "lat": 37.7749,
+            "lng": -122.4194,
+            "zip_code": "94105"
+        },
+        "categories": [
+            {
+                "alias": "italian",
+                "title": "Italian"
+            }
         ],
+        "image_url": "https://example.com/image.jpg",
+        "rating": 4.5,
+        "review_count": 100,
+        "price": "$$$",
+        "display_phone": "(123) 456-7890"
+    }
+    """.data(using: .utf8)!)
+    
+    return RestaurantMapView(
+        restaurants: [sampleRestaurant],
         centerCoordinate: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
     )
 } 

@@ -5,7 +5,7 @@ struct RestaurantSearchResponse: Codable {
     let total: Int
 }
 
-struct Restaurant: Identifiable, Codable {
+struct Restaurant: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let location: Location
@@ -41,9 +41,13 @@ struct Restaurant: Identifiable, Codable {
             photos = []
         }
     }
+    
+    static func == (lhs: Restaurant, rhs: Restaurant) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
-struct Location: Codable {
+struct Location: Codable, Equatable {
     let address1: String
     let city: String
     let state: String
@@ -60,7 +64,7 @@ struct Location: Codable {
     }
 }
 
-struct Category: Codable {
+struct Category: Codable, Equatable {
     let alias: String
     let title: String
 }
