@@ -46,26 +46,25 @@ class LocationManager: NSObject, ObservableObject {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        
-        Task {
-            await checkLocationAuthorization()
-        }
+        checkLocationAuthorization()
     }
     
     private func checkLocationAuthorization() {
-        switch manager.authorizationStatus {
-        case .notDetermined:
-            state = .notDetermined
-            manager.requestWhenInUseAuthorization()
-        case .restricted:
-            state = .restricted
-        case .denied:
-            state = .denied
-        case .authorizedAlways, .authorizedWhenInUse:
-            state = .authorized
-            manager.startUpdatingLocation()
-        @unknown default:
-            state = .unavailable
+        Task {
+            switch manager.authorizationStatus {
+            case .notDetermined:
+                state = .notDetermined
+                manager.requestWhenInUseAuthorization()
+            case .restricted:
+                state = .restricted
+            case .denied:
+                state = .denied
+            case .authorizedAlways, .authorizedWhenInUse:
+                state = .authorized
+                manager.startUpdatingLocation()
+            @unknown default:
+                state = .unavailable
+            }
         }
     }
 }

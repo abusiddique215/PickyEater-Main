@@ -4,39 +4,30 @@ import MapKit
 struct RestaurantMapView: View {
     let restaurants: [Restaurant]
     @State private var selectedRestaurant: Restaurant?
-    @State private var mapRegion: MKCoordinateRegion
+    @State private var camera: MapCameraPosition
     @State private var lookAroundScene: MKLookAroundScene?
     @Environment(\.appTheme) private var theme
     
     init(restaurants: [Restaurant], centerCoordinate: CLLocationCoordinate2D) {
         self.restaurants = restaurants
-        _mapRegion = State(initialValue: MKCoordinateRegion(
+        _camera = State(initialValue: .region(MKCoordinateRegion(
             center: centerCoordinate,
             span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-        ))
+        )))
     }
     
     var body: some View {
-        Map(initialPosition: MapCameraPosition.region(mapRegion)) {
-            UserAnnotation()
+        Map(position: $camera) {
             ForEach(restaurants) { restaurant in
-                Annotation(
-                    restaurant.name,
-                    coordinate: CLLocationCoordinate2D(
-                        latitude: restaurant.location.latitude,
-                        longitude: restaurant.location.longitude
-                    ),
-                    anchor: .bottom
-                ) {
-                    Image(systemName: "mappin.circle.fill")
-                        .font(.title)
-                        .foregroundColor(selectedRestaurant?.id == restaurant.id ? .pink : .blue)
-                        .onTapGesture {
-                            withAnimation {
-                                selectedRestaurant = restaurant
-                            }
-                        }
+                let coordinate = CLLocationCoordinate2D(
+                    latitude: restaurant.location.latitude,
+                    longitude: restaurant.location.longitude
+                )
+                Marker(coordinate: coordinate) {
+                    Image(systemName: "mappin")
+                        .foregroundStyle(selectedRestaurant?.id == restaurant.id ? .pink : .blue)
                 }
+                .tag(restaurant.id)
             }
         }
         .mapStyle(theme == .dark ? 
@@ -62,12 +53,15 @@ struct RestaurantMapView: View {
         }
         .onChange(of: selectedRestaurant) { _, restaurant in
             guard let restaurant else { return }
-            // Update map region to focus on selected restaurant
+            // Update map camera to focus on selected restaurant
             withAnimation {
-                mapRegion.center = CLLocationCoordinate2D(
-                    latitude: restaurant.location.latitude,
-                    longitude: restaurant.location.longitude
-                )
+                camera = .region(MKCoordinateRegion(
+                    center: .init(
+                        latitude: restaurant.location.latitude,
+                        longitude: restaurant.location.longitude
+                    ),
+                    span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                ))
             }
             // Try to load Look Around scene
             Task {

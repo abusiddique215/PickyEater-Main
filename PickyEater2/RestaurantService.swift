@@ -1,63 +1,107 @@
 import Foundation
 import CoreLocation
-import MapKit
 
 actor RestaurantService {
     static let shared = RestaurantService()
-    private let yelpService: YelpAPIService
+    private let baseURL = "https://api.yelp.com/v3"
+    private let apiKey: String
+    private let session: URLSession
     
     init() {
-        self.yelpService = YelpAPIService(apiKey: Config.yelpAPIKey)
+        self.apiKey = ProcessInfo.processInfo.environment["YELP_API_KEY"] ?? ""
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 300
+        self.session = URLSession(configuration: config)
     }
     
-    func searchRestaurants(near location: CLLocation, preferences: UserPreferences) async throws -> [Restaurant] {
-        print("🔍 Searching for restaurants near: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+    func searchRestaurants(
+        near location: CLLocation,
+        preferences: UserPreferences,
+        offset: Int = 0
+    ) async throws -> [Restaurant] {
+        var components = URLComponents(string: "\(baseURL)/businesses/search")!
+        
+        // Convert price range to Yelp format (1,2,3,4)
+        let priceFilter = preferences.priceRange.map { String($0) }.joined(separator: ",")
+        
+        // Parameters
+        components.queryItems = [
+            URLQueryItem(name: "latitude", value: String(location.coordinate.latitude)),
+            URLQueryItem(name: "longitude", value: String(location.coordinate.longitude)),
+            URLQueryItem(name: "radius", value: String(min(40000, preferences.maxDistance * 1000))), // Max 40km per Yelp API
+            URLQueryItem(name: "categories", value: "restaurants,food"),
+            URLQueryItem(name: "limit", value: "50"), // Maximum allowed by Yelp
+            URLQueryItem(name: "offset", value: String(offset)),
+            URLQueryItem(name: "sort_by", value: "distance"),
+            URLQueryItem(name: "open_now", value: "true")
+        ]
+        
+        // Add optional filters
+        if !priceFilter.isEmpty {
+            components.queryItems?.append(URLQueryItem(name: "price", value: priceFilter))
+        }
+        
+        if !preferences.cuisinePreferences.isEmpty {
+            let categories = preferences.cuisinePreferences.joined(separator: ",").lowercased()
+            components.queryItems?.append(URLQueryItem(name: "categories", value: categories))
+        }
+        
+        var request = URLRequest(url: components.url!)
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        print("Searching restaurants near: lat=\(location.coordinate.latitude), lon=\(location.coordinate.longitude), radius=\(preferences.maxDistance * 1000)")
         
         do {
-            // Try Yelp API first
-            let radius = Int(preferences.maxDistance * 1000) // Convert km to meters
-            let yelpRestaurants = try await yelpService.searchRestaurants(
-                latitude: location.coordinate.latitude,
-                longitude: location.coordinate.longitude,
-                radius: radius,
-                categories: preferences.cuisinePreferences
-            )
+            let (data, response) = try await session.data(for: request)
             
-            let restaurants = yelpRestaurants.map { $0.toRestaurant() }
-            
-            if restaurants.isEmpty {
-                print("⚠️ No restaurants found with Yelp API, trying Apple Maps...")
-                return try await searchWithAppleMaps(near: location, preferences: preferences)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw URLError(.badServerResponse)
             }
             
-            return filterRestaurants(restaurants, preferences: preferences)
+            if httpResponse.statusCode == 429 {
+                // Rate limit hit - wait and retry
+                try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                return try await searchRestaurants(near: location, preferences: preferences, offset: offset)
+            }
             
+            guard httpResponse.statusCode == 200 else {
+                if let errorString = String(data: data, encoding: .utf8) {
+                    print("API Error (\(httpResponse.statusCode)): \(errorString)")
+                }
+                throw URLError(.badServerResponse)
+            }
+            
+            let decoder = JSONDecoder()
+            let yelpResponse = try decoder.decode(RestaurantSearchResponse.self, from: data)
+            print("Found \(yelpResponse.businesses.count) restaurants")
+            
+            // Filter results based on dietary restrictions
+            let filteredRestaurants = yelpResponse.businesses.filter { restaurant in
+                guard !preferences.dietaryRestrictions.isEmpty else { return true }
+                return restaurant.categories.contains { category in
+                    preferences.dietaryRestrictions.contains { restriction in
+                        category.alias.contains(restriction.lowercased()) ||
+                        category.title.lowercased().contains(restriction.lowercased())
+                    }
+                }
+            }
+            
+            // If we have few results and there are more available, fetch the next page
+            if filteredRestaurants.count < 10 && yelpResponse.total > offset + yelpResponse.businesses.count {
+                let nextPageRestaurants = try await searchRestaurants(
+                    near: location,
+                    preferences: preferences,
+                    offset: offset + yelpResponse.businesses.count
+                )
+                return filteredRestaurants + nextPageRestaurants
+            }
+            
+            return filteredRestaurants
         } catch {
-            print("❌ Yelp API error: \(error.localizedDescription)")
-            print("↪️ Falling back to Apple Maps...")
-            return try await searchWithAppleMaps(near: location, preferences: preferences)
-        }
-    }
-    
-    private func searchWithAppleMaps(near location: CLLocation, preferences: UserPreferences) async throws -> [Restaurant] {
-        let radius = Int(preferences.maxDistance * 1000)
-        let mapItems = try await yelpService.searchWithAppleMaps(
-            latitude: location.coordinate.latitude,
-            longitude: location.coordinate.longitude,
-            radius: radius
-        )
-        
-        let restaurants = mapItems.map { $0.toRestaurant() }
-        return filterRestaurants(restaurants, preferences: preferences)
-    }
-    
-    private func filterRestaurants(_ restaurants: [Restaurant], preferences: UserPreferences) -> [Restaurant] {
-        guard !preferences.cuisinePreferences.isEmpty else { return restaurants }
-        
-        return restaurants.filter { restaurant in
-            let restaurantCuisines = Set(restaurant.categories.map { $0.alias.lowercased() })
-            let preferredCuisines = Set(preferences.cuisinePreferences.map { $0.lowercased() })
-            return !restaurantCuisines.intersection(preferredCuisines).isEmpty
+            print("Search failed: \(error.localizedDescription)")
+            throw error
         }
     }
 } 
