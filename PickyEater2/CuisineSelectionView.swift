@@ -3,6 +3,7 @@ import SwiftUI
 struct CuisineSelectionView: View {
     @Binding var preferences: UserPreferences
     @State private var selectedCuisines: Set<String> = []
+    @Environment(\.dismiss) private var dismiss
     
     private let cuisineTypes = [
         "Afghan", "African", "Algerian", "American",
@@ -17,64 +18,79 @@ struct CuisineSelectionView: View {
     ]
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                Text("Pick your food")
-                    .font(.system(size: 40, weight: .bold))
-                    .padding(.top)
+        VStack(spacing: 24) {
+            HStack {
+                Button(action: { dismiss() }) {
+                    Image(systemName: "chevron.left")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                }
                 
-                Text("Select the type of cuisine 🍽️")
-                    .font(.title2)
-                    .foregroundColor(.secondary)
+                Spacer()
                 
-                ScrollView {
-                    FlowLayout(spacing: 8) {
-                        ForEach(cuisineTypes, id: \.self) { cuisine in
-                            Button {
-                                if selectedCuisines.contains(cuisine) {
-                                    selectedCuisines.remove(cuisine)
-                                } else {
-                                    selectedCuisines.insert(cuisine)
-                                }
-                            } label: {
-                                Text(cuisine)
-                                    .font(.system(.body, design: .rounded))
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        Capsule()
-                                            .fill(selectedCuisines.contains(cuisine) ? Color.pink : Color.white)
-                                    )
-                                    .foregroundColor(selectedCuisines.contains(cuisine) ? .white : .black)
+                Button("Done") {
+                    preferences.cuisinePreferences = Array(selectedCuisines)
+                    dismiss()
+                }
+                .font(.body.bold())
+                .foregroundColor(.blue)
+            }
+            .padding(.horizontal)
+            
+            Text("Select the type of cuisine 🍽️")
+                .font(.title)
+                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+                .padding(.top)
+            
+            ScrollView {
+                FlowLayout(spacing: 8) {
+                    ForEach(cuisineTypes, id: \.self) { cuisine in
+                        Button {
+                            if selectedCuisines.contains(cuisine) {
+                                selectedCuisines.remove(cuisine)
+                            } else {
+                                selectedCuisines.insert(cuisine)
                             }
+                        } label: {
+                            Text(cuisine)
+                                .font(.system(.body, design: .rounded))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(selectedCuisines.contains(cuisine) ? Color.pink : Color.white)
+                                )
+                                .foregroundColor(selectedCuisines.contains(cuisine) ? .white : .black)
                         }
                     }
-                    .padding()
                 }
-                
-                NavigationLink {
-                    LocationSelectionView(preferences: $preferences)
-                } label: {
-                    HStack {
-                        Text("NEXT")
-                        Image(systemName: "arrow.right")
-                    }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(selectedCuisines.isEmpty ? Color.gray : Color.white)
-                    )
-                    .foregroundColor(selectedCuisines.isEmpty ? .white : .black)
-                }
-                .disabled(selectedCuisines.isEmpty)
-                .padding(.horizontal)
-                .padding(.bottom)
+                .padding()
             }
-            .background(Color.black)
-            .preferredColorScheme(.dark)
+            
+            Button {
+                preferences.cuisinePreferences = Array(selectedCuisines)
+                dismiss()
+            } label: {
+                HStack {
+                    Text("NEXT")
+                    Image(systemName: "arrow.right")
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(selectedCuisines.isEmpty ? Color.gray : Color.white)
+                )
+                .foregroundColor(selectedCuisines.isEmpty ? .white : .black)
+            }
+            .disabled(selectedCuisines.isEmpty)
+            .padding(.horizontal)
+            .padding(.bottom)
         }
+        .background(Color.black)
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -154,5 +170,7 @@ struct FlowLayout: Layout {
 }
 
 #Preview {
-    CuisineSelectionView(preferences: .constant(UserPreferences()))
+    NavigationStack {
+        CuisineSelectionView(preferences: .constant(UserPreferences()))
+    }
 } 

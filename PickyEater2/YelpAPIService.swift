@@ -1,6 +1,5 @@
 import Foundation
 import CoreLocation
-@_exported import Models
 
 struct YelpAPIService {
     private let apiKey: String

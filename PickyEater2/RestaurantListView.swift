@@ -1,6 +1,5 @@
 import SwiftUI
 import CoreLocation
-@_exported import Models
 
 struct RestaurantListView: View {
     let preferences: UserPreferences

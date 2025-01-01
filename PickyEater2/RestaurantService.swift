@@ -1,9 +1,6 @@
 import Foundation
 import CoreLocation
 
-// Import our models
-@_exported import Models
-
 actor RestaurantService {
     static let shared = RestaurantService()
     private let yelpService: YelpAPIService
