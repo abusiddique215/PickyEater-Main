@@ -198,28 +198,44 @@ struct ModernRestaurantCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Restaurant Image
-            if let firstPhoto = restaurant.photos.first {
-                AsyncImage(url: URL(string: firstPhoto)) { image in
+            AsyncImage(url: URL(string: restaurant.imageUrl)) { phase in
+                switch phase {
+                case .empty:
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay {
+                            ProgressView()
+                                .tint(colors.primary)
+                        }
+                case .success(let image):
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                } placeholder: {
+                case .failure(_):
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay {
+                            Image(systemName: "photo")
+                                .font(.largeTitle)
+                                .foregroundColor(colors.secondary)
+                        }
+                @unknown default:
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
                 }
-                .frame(height: 200)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                .overlay(alignment: .topTrailing) {
-                    Button {
-                        isFavorite.toggle()
-                    } label: {
-                        Image(systemName: isFavorite ? "heart.fill" : "heart")
-                            .font(.title3)
-                            .foregroundColor(isFavorite ? colors.primary : .white)
-                            .padding(8)
-                            .background(Circle().fill(Color.black.opacity(0.6)))
-                            .padding(8)
-                    }
+            }
+            .frame(height: 200)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    isFavorite.toggle()
+                } label: {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        .font(.title3)
+                        .foregroundColor(isFavorite ? colors.primary : .white)
+                        .padding(8)
+                        .background(Circle().fill(Color.black.opacity(0.6)))
+                        .padding(8)
                 }
             }
             
@@ -233,31 +249,39 @@ struct ModernRestaurantCard: View {
                     
                     Spacer()
                     
-                    HStack(spacing: 4) {
-                        Image(systemName: "star.fill")
-                            .foregroundColor(.yellow)
-                        Text(String(format: "%.1f", restaurant.rating))
-                            .fontWeight(.semibold)
-                            .foregroundColor(colors.text)
+                    if restaurant.rating > 0 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "star.fill")
+                                .foregroundColor(.yellow)
+                            Text(String(format: "%.1f", restaurant.rating))
+                                .fontWeight(.semibold)
+                                .foregroundColor(colors.text)
+                            Text("(\(restaurant.reviewCount))")
+                                .font(.caption)
+                                .foregroundColor(colors.secondary)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(colors.cardBackground)
+                        .cornerRadius(8)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(colors.cardBackground)
-                    .cornerRadius(8)
                 }
                 
                 // Categories and Price
-                HStack {
-                    Text(restaurant.categories.map { $0.title }.joined(separator: " • "))
-                        .font(.subheadline)
-                        .foregroundColor(colors.secondary)
-                    
-                    if let price = restaurant.price {
-                        Text("•")
-                            .foregroundColor(colors.secondary)
-                        Text(price)
+                if !restaurant.categories.isEmpty {
+                    HStack {
+                        Text(restaurant.categories.map { $0.title }.joined(separator: " • "))
                             .font(.subheadline)
-                            .foregroundColor(.green)
+                            .foregroundColor(colors.secondary)
+                            .lineLimit(1)
+                        
+                        if let price = restaurant.price {
+                            Text("•")
+                                .foregroundColor(colors.secondary)
+                            Text(price)
+                                .font(.subheadline)
+                                .foregroundColor(.green)
+                        }
                     }
                 }
                 
@@ -268,12 +292,20 @@ struct ModernRestaurantCard: View {
                     Text("\(restaurant.location.address1), \(restaurant.location.city)")
                         .font(.subheadline)
                         .foregroundColor(colors.secondary)
+                    if let distance = restaurant.distance {
+                        Text("•")
+                            .foregroundColor(colors.secondary)
+                        Text(String(format: "%.1f km", distance / 1000))
+                            .font(.subheadline)
+                            .foregroundColor(colors.secondary)
+                    }
                 }
                 
                 // Action Buttons
                 HStack(spacing: 12) {
                     Button {
-                        if let url = URL(string: "maps://?q=\(restaurant.location.address1)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") {
+                        let query = "\(restaurant.location.address1), \(restaurant.location.city)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+                        if let url = URL(string: "maps://?q=\(query)") {
                             UIApplication.shared.open(url)
                         }
                     } label: {
@@ -287,9 +319,9 @@ struct ModernRestaurantCard: View {
                             .cornerRadius(12)
                     }
                     
-                    if let phone = restaurant.displayPhone {
+                    if !restaurant.phone.isEmpty {
                         Button {
-                            if let url = URL(string: "tel:\(phone)") {
+                            if let url = URL(string: "tel:\(restaurant.phone)") {
                                 UIApplication.shared.open(url)
                             }
                         } label: {
