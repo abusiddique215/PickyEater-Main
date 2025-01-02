@@ -7,8 +7,9 @@ struct LocationSelectionView: View {
     @StateObject private var locationManager = LocationManager()
     
     private let locations: [String: CLLocationCoordinate2D] = [
+        "Current Location": CLLocationCoordinate2D(latitude: 40.68035, longitude: -73.86539),
         "Montreal": CLLocationCoordinate2D(latitude: 45.5017, longitude: -73.5673),
-        "Laurentides": CLLocationCoordinate2D(latitude: 46.05, longitude: -74.3),
+        "Laurentides": CLLocationCoordinate2D(latitude: 46.0500, longitude: -74.3000),
         "Laval": CLLocationCoordinate2D(latitude: 45.6066, longitude: -73.7124),
         "West Island": CLLocationCoordinate2D(latitude: 45.4911, longitude: -73.7673),
         "South Shore": CLLocationCoordinate2D(latitude: 45.4255, longitude: -73.6337)

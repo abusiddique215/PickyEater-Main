@@ -79,8 +79,15 @@ extension LocationManager: CLLocationManagerDelegate {
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         Task { @MainActor in
-            self.location = location
-            print("🔍 Updated location: lat=\(location.coordinate.latitude), lon=\(location.coordinate.longitude)")
+            let coordinate = location.coordinate
+            // Accept coordinates in North America range
+            if coordinate.latitude >= 25 && coordinate.latitude <= 50 && 
+               coordinate.longitude >= -130 && coordinate.longitude <= -60 {
+                self.location = location
+                print("🔍 Updated location: lat=\(coordinate.latitude), lon=\(coordinate.longitude)")
+            } else {
+                print("⚠️ Invalid coordinates detected: lat=\(coordinate.latitude), lon=\(coordinate.longitude)")
+            }
         }
     }
     

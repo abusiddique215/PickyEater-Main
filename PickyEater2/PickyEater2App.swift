@@ -12,7 +12,9 @@ import SwiftData
 struct PickyEater2App: App {
     var body: some Scene {
         WindowGroup {
-            MainTabView()
+            NavigationStack {
+                CuisineSelectionView(preferences: .constant(UserPreferences()))
+            }
         }
         .modelContainer(for: UserPreferences.self)
     }
