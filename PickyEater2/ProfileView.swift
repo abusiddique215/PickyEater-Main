@@ -10,10 +10,10 @@ struct ProfileView: View {
         cardBackground: Color(white: 0.12)                       // Slightly lighter than black
     )
     
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var isEditingProfile = false
     @AppStorage("userName") private var userName = "Guest User"
     @AppStorage("userEmail") private var userEmail = ""
-    @AppStorage("isDarkMode") private var isDarkMode = true
     
     var body: some View {
         NavigationStack {
@@ -96,8 +96,11 @@ struct ProfileView: View {
                         SettingsSection(title: "App Settings") {
                             VStack(spacing: 0) {
                                 SettingsRow(icon: "moon.fill", title: "Dark Mode", color: .purple) {
-                                    Toggle("", isOn: $isDarkMode)
-                                        .tint(colors.primary)
+                                    Toggle("", isOn: Binding(
+                                        get: { themeManager.colorScheme == .dark },
+                                        set: { _ in themeManager.toggleTheme() }
+                                    ))
+                                    .tint(colors.primary)
                                 }
                                 
                                 SettingsRow(icon: "bell.fill", title: "Notifications", color: .orange) {

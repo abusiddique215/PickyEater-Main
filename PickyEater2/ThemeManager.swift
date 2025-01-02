@@ -1,40 +1,37 @@
 import SwiftUI
-import SwiftData
 
-@Observable
-class ThemeManager {
-    static let shared = ThemeManager()
-    private let themeKey = "AppTheme"
-    
-    var currentTheme: AppTheme {
-        didSet {
-            UserDefaults.standard.set(currentTheme.rawValue, forKey: themeKey)
-        }
-    }
-    
-    private init() {
-        let savedTheme = UserDefaults.standard.string(forKey: themeKey)
-        self.currentTheme = AppTheme(rawValue: savedTheme ?? "") ?? .system
-    }
+// Theme environment key
+struct ThemeKey: EnvironmentKey {
+    static let defaultValue: ColorScheme? = nil
 }
 
-private struct ThemeKey: EnvironmentKey {
-    static let defaultValue: AppTheme = .system
-}
-
+// Extend environment values to include theme
 extension EnvironmentValues {
-    var appTheme: AppTheme {
+    var appTheme: ColorScheme? {
         get { self[ThemeKey.self] }
         set { self[ThemeKey.self] = newValue }
     }
 }
 
-struct ThemeModifier: ViewModifier {
-    let theme: AppTheme
+// Theme manager as observable object
+@MainActor
+class ThemeManager: ObservableObject {
+    static let shared = ThemeManager()
     
-    func body(content: Content) -> some View {
-        content
-            .preferredColorScheme(theme.colorScheme)
-            .environment(\.appTheme, theme)
+    @AppStorage("isDarkMode") private var isDarkMode = true
+    @Published var colorScheme: ColorScheme? = nil
+    
+    private init() {
+        // Initialize the color scheme based on the stored preference
+        colorScheme = isDarkMode ? .dark : .light
+    }
+    
+    func toggleTheme() {
+        isDarkMode.toggle()
+        colorScheme = isDarkMode ? .dark : .light
+    }
+    
+    func getCurrentTheme() -> ColorScheme {
+        return isDarkMode ? .dark : .light
     }
 } 

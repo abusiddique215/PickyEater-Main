@@ -10,13 +10,14 @@ import SwiftData
 
 @main
 struct PickyEater2App: App {
+    @StateObject private var themeManager = ThemeManager.shared
+    
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                CuisineSelectionView(preferences: .constant(UserPreferences()))
-                    .navigationBarBackButtonHidden()
-            }
+            ContentView()
+                .modelContainer(for: UserPreferences.self)
+                .preferredColorScheme(themeManager.colorScheme)
+                .environment(\.appTheme, themeManager.colorScheme)
         }
-        .modelContainer(for: UserPreferences.self)
     }
 }
