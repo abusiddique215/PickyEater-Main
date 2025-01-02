@@ -17,9 +17,9 @@ enum AppTheme: String, Codable {
 final class UserPreferences {
     var maxDistance: Int
     var priceRange: Int
-    @Attribute(transform: StringArrayTransformer())
+    @Attribute(.externalStorage)
     var dietaryRestrictions: [String]
-    @Attribute(transform: StringArrayTransformer())
+    @Attribute(.externalStorage)
     var cuisinePreferences: [String]
     var theme: AppTheme
     
@@ -37,6 +37,9 @@ final class UserPreferences {
         self.theme = theme
     }
 }
+
+// MARK: - Codable Arrays
+extension Array: Codable where Element: Codable {}
 
 // MARK: - Value Transformers
 class StringArrayTransformer: ValueTransformer {
