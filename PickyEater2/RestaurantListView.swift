@@ -41,6 +41,19 @@ struct RestaurantListView: View {
             }
         }
         .background(theme == .dark ? Color.black : Color.white)
+        .navigationTitle("Recommended Restaurants")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Task {
+                        await loadRestaurants(forceRefresh: true)
+                    }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+            }
+        }
     }
     
     private var restaurantList: some View {

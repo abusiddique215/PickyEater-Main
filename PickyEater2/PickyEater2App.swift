@@ -14,6 +14,7 @@ struct PickyEater2App: App {
         WindowGroup {
             NavigationStack {
                 CuisineSelectionView(preferences: .constant(UserPreferences()))
+                    .navigationBarBackButtonHidden()
             }
         }
         .modelContainer(for: UserPreferences.self)
