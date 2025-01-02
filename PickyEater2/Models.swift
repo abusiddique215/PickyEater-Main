@@ -16,7 +16,7 @@ struct RestaurantSearchResponse: Codable {
     }
 }
 
-struct Restaurant: Identifiable, Codable {
+struct Restaurant: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let imageUrl: String
@@ -62,19 +62,23 @@ struct Restaurant: Identifiable, Codable {
         // Set photos array to include at least the main image URL
         photos = [imageUrl]
     }
+    
+    static func == (lhs: Restaurant, rhs: Restaurant) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
-struct Category: Codable {
+struct Category: Codable, Equatable {
     let alias: String
     let title: String
 }
 
-struct Coordinates: Codable {
+struct Coordinates: Codable, Equatable {
     let latitude: Double
     let longitude: Double
 }
 
-struct Location: Codable {
+struct Location: Codable, Equatable {
     let address1: String
     let address2: String?
     let address3: String?

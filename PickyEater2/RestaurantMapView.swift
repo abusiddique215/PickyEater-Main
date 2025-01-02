@@ -3,162 +3,119 @@ import MapKit
 
 struct RestaurantMapView: View {
     let restaurants: [Restaurant]
+    let centerCoordinate: CLLocationCoordinate2D
+    @State private var region: MKCoordinateRegion
     @State private var selectedRestaurant: Restaurant?
-    @State private var camera: MapCameraPosition
-    @State private var lookAroundScene: MKLookAroundScene?
-    @Environment(\.appTheme) private var theme
     
     init(restaurants: [Restaurant], centerCoordinate: CLLocationCoordinate2D) {
         self.restaurants = restaurants
-        _camera = State(initialValue: .region(MKCoordinateRegion(
+        self.centerCoordinate = centerCoordinate
+        // Initialize region with the center coordinate
+        _region = State(initialValue: MKCoordinateRegion(
             center: centerCoordinate,
             span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-        )))
+        ))
     }
     
     var body: some View {
-        Map(position: $camera) {
-            ForEach(restaurants) { restaurant in
-                let coordinate = CLLocationCoordinate2D(
-                    latitude: restaurant.location.latitude,
-                    longitude: restaurant.location.longitude
-                )
-                Marker(restaurant.name, coordinate: coordinate)
-                    .tint(selectedRestaurant?.id == restaurant.id ? .pink : .blue)
-            }
-        }
-        .mapStyle(theme == .dark ? 
-            .standard(elevation: .realistic, pointsOfInterest: .all, showsTraffic: true)
-            : .standard(elevation: .realistic))
-        .overlay(alignment: .bottom) {
-            if let selectedRestaurant {
-                RestaurantPreviewCard(restaurant: selectedRestaurant) {
-                    withAnimation {
-                        self.selectedRestaurant = nil
-                    }
+        Map(coordinateRegion: $region, annotationItems: restaurants) { restaurant in
+            MapAnnotation(coordinate: CLLocationCoordinate2D(
+                latitude: restaurant.coordinates.latitude,
+                longitude: restaurant.coordinates.longitude
+            )) {
+                RestaurantAnnotation(
+                    restaurant: restaurant,
+                    isSelected: selectedRestaurant?.id == restaurant.id
+                ) {
+                    selectedRestaurant = restaurant
                 }
-                .transition(.move(edge: .bottom))
             }
         }
-        .safeAreaInset(edge: .bottom) {
-            if lookAroundScene != nil {
-                LookAroundPreview(scene: $lookAroundScene)
-                    .frame(height: 150)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .padding()
-            }
+        .sheet(item: $selectedRestaurant) { restaurant in
+            RestaurantDetailSheet(restaurant: restaurant)
+                .presentationDetents([.medium])
         }
-        .onChange(of: selectedRestaurant) { _, restaurant in
-            guard let restaurant else { return }
-            // Update map camera to focus on selected restaurant
-            withAnimation {
-                camera = .region(MKCoordinateRegion(
-                    center: .init(
-                        latitude: restaurant.location.latitude,
-                        longitude: restaurant.location.longitude
-                    ),
-                    span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-                ))
-            }
-            // Try to load Look Around scene
-            Task {
-                lookAroundScene = try? await loadLookAroundScene(for: restaurant)
-            }
-        }
-    }
-    
-    private func loadLookAroundScene(for restaurant: Restaurant) async throws -> MKLookAroundScene? {
-        let coordinate = CLLocationCoordinate2D(
-            latitude: restaurant.location.latitude,
-            longitude: restaurant.location.longitude
-        )
-        return try? await MKLookAroundSceneRequest(coordinate: coordinate).scene
     }
 }
 
-struct RestaurantPreviewCard: View {
+struct RestaurantAnnotation: View {
     let restaurant: Restaurant
-    let onDismiss: () -> Void
-    @Environment(\.appTheme) private var theme
+    let isSelected: Bool
+    let action: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: "mappin.circle.fill")
+                    .font(.title)
+                    .foregroundColor(isSelected ? .red : .gray)
+                
                 Text(restaurant.name)
-                    .font(.headline)
-                Spacer()
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.black.opacity(0.7))
+                    .cornerRadius(8)
             }
+        }
+    }
+}
+
+struct RestaurantDetailSheet: View {
+    let restaurant: Restaurant
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(restaurant.name)
+                .font(.title2)
+                .fontWeight(.bold)
             
-            if let firstPhoto = restaurant.photos.first,
-               let url = URL(string: firstPhoto) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
-                .frame(height: 120)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-            
-            HStack {
-                Label(restaurant.location.address1, systemImage: "location.fill")
-                    .foregroundStyle(.secondary)
-                Spacer()
-                if let price = restaurant.price {
-                    Text(price)
-                        .foregroundStyle(.green)
-                }
+            if !restaurant.categories.isEmpty {
+                Text(restaurant.categories.map { $0.title }.joined(separator: " • "))
+                    .foregroundColor(.secondary)
             }
             
             HStack {
-                ForEach(restaurant.categories, id: \.alias) { category in
-                    Text(category.title)
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(.secondary.opacity(0.2))
-                        .clipShape(Capsule())
-                }
+                Image(systemName: "star.fill")
+                    .foregroundColor(.yellow)
+                Text(String(format: "%.1f", restaurant.rating))
+                Text("(\(restaurant.reviewCount) reviews)")
+                    .foregroundColor(.secondary)
             }
             
-            HStack {
-                if restaurant.rating > 0 {
-                    Label(String(format: "%.1f", restaurant.rating), systemImage: "star.fill")
-                        .foregroundStyle(.yellow)
-                    Text("(\(restaurant.reviewCount) reviews)")
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if let phone = restaurant.displayPhone {
-                    Button {
-                        guard let url = URL(string: "tel:\(phone)") else { return }
+            if let price = restaurant.price {
+                Text(price)
+                    .foregroundColor(.green)
+            }
+            
+            Text(restaurant.location.displayAddress.joined(separator: "\n"))
+                .foregroundColor(.secondary)
+            
+            if !restaurant.phone.isEmpty {
+                Button {
+                    if let url = URL(string: "tel:\(restaurant.phone)") {
                         UIApplication.shared.open(url)
-                    } label: {
-                        Label(phone, systemImage: "phone.fill")
                     }
+                } label: {
+                    Label("Call Restaurant", systemImage: "phone.fill")
                 }
+                .buttonStyle(.bordered)
             }
             
             Button {
-                let query = "\(restaurant.location.address1), \(restaurant.location.city)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+                let query = restaurant.location.displayAddress.joined(separator: " ").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
                 if let url = URL(string: "maps://?q=\(query)") {
                     UIApplication.shared.open(url)
                 }
             } label: {
-                Text("Get Directions")
-                    .frame(maxWidth: .infinity)
+                Label("Get Directions", systemImage: "location.fill")
             }
             .buttonStyle(.bordered)
+            
+            Spacer()
         }
-        .padding()
-        .background(theme == .dark ? .black : .white)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
         .padding()
     }
 }
