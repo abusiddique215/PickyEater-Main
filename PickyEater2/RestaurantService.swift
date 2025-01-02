@@ -23,7 +23,7 @@ actor RestaurantService {
         var components = URLComponents(string: "\(baseURL)/businesses/search")!
         
         // Convert price range to Yelp format (1,2,3,4)
-        let priceFilter = preferences.priceRange.map { String($0) }.joined(separator: ",")
+        let priceFilter = String(preferences.priceRange)
         
         // Parameters
         components.queryItems = [
@@ -38,7 +38,7 @@ actor RestaurantService {
         ]
         
         // Add optional filters
-        if !priceFilter.isEmpty {
+        if preferences.priceRange > 0 {
             components.queryItems?.append(URLQueryItem(name: "price", value: priceFilter))
         }
         

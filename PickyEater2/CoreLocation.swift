@@ -80,6 +80,7 @@ extension LocationManager: CLLocationManagerDelegate {
         guard let location = locations.last else { return }
         Task { @MainActor in
             self.location = location
+            print("🔍 Updated location: lat=\(location.coordinate.latitude), lon=\(location.coordinate.longitude)")
         }
     }
     

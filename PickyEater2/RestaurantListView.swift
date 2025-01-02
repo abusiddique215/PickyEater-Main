@@ -148,7 +148,7 @@ struct RestaurantListView: View {
         defer { isLoading = false }
         
         do {
-            restaurants = try await RestaurantService.shared.searchRestaurants(
+            restaurants = try await YelpAPIService.shared.searchRestaurants(
                 near: location,
                 preferences: preferences
             )

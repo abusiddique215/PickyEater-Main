@@ -18,7 +18,7 @@ class YelpAPIService {
     private let apiKey: String
     
     private init() {
-        // Get API key from environment
+        // Fetch API key from environment variables
         self.apiKey = ProcessInfo.processInfo.environment["YELP_API_KEY"] ?? ""
         print("📝 API Key status: \(self.apiKey.isEmpty ? "❌ Not found" : "✅ Found (\(self.apiKey.prefix(6))...)")")
         
@@ -55,7 +55,7 @@ class YelpAPIService {
         }
         
         // Build URL with explicit integer radius
-        let radiusInMeters: Int = preferences.maxDistance * 1000 // Convert km to meters
+        let radiusInMeters: Int = min(preferences.maxDistance * 1000, 40000) // Max 40km per Yelp API
         let latitude = String(format: "%.6f", location.coordinate.latitude)
         let longitude = String(format: "%.6f", location.coordinate.longitude)
         
@@ -129,6 +129,11 @@ class YelpAPIService {
                 }
                 return try await searchWithAppleMaps(near: location)
                 
+            case 429:
+                print("❌ Rate limit exceeded - Retrying after delay")
+                try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                return try await searchRestaurants(near: location, preferences: preferences)
+                
             default:
                 print("❌ Unexpected status code: \(httpResponse.statusCode)")
                 return try await searchWithAppleMaps(near: location)
@@ -141,25 +146,7 @@ class YelpAPIService {
         }
     }
     
-    private func searchRestaurantsWithLargerRadius(
-        near location: CLLocation,
-        preferences: UserPreferences,
-        radius: Int = 5000
-    ) async throws -> [Restaurant] {
-        print("🔄 Retrying search with \(radius)m radius...")
-        // Create new preferences with modified radius
-        let modifiedPreferences = UserPreferences(
-            maxDistance: radius / 1000,
-            priceRange: preferences.priceRange,
-            dietaryRestrictions: preferences.dietaryRestrictions,
-            cuisinePreferences: preferences.cuisinePreferences,
-            theme: preferences.theme
-        )
-        return try await searchRestaurants(near: location, preferences: modifiedPreferences)
-    }
-    
-    // Fallback to Apple Maps search if Yelp API fails
-    func searchWithAppleMaps(near location: CLLocation, radius: Int = 1000) async throws -> [Restaurant] {
+    private func searchWithAppleMaps(near location: CLLocation, radius: Int = 1000) async throws -> [Restaurant] {
         let region = MKCoordinateRegion(
             center: location.coordinate,
             latitudinalMeters: Double(radius),

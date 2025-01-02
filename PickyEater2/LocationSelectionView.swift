@@ -1,12 +1,17 @@
 import SwiftUI
+import CoreLocation
 
 struct LocationSelectionView: View {
     @Binding var preferences: UserPreferences
     @State private var selectedLocation: String?
     @StateObject private var locationManager = LocationManager()
     
-    private let locations = [
-        "Montreal", "Laurentides", "Laval", "West Island", "South Shore"
+    private let locations: [String: CLLocationCoordinate2D] = [
+        "Montreal": CLLocationCoordinate2D(latitude: 45.5017, longitude: -73.5673),
+        "Laurentides": CLLocationCoordinate2D(latitude: 46.05, longitude: -74.3),
+        "Laval": CLLocationCoordinate2D(latitude: 45.6066, longitude: -73.7124),
+        "West Island": CLLocationCoordinate2D(latitude: 45.4911, longitude: -73.7673),
+        "South Shore": CLLocationCoordinate2D(latitude: 45.4255, longitude: -73.6337)
     ]
     
     var body: some View {
@@ -21,9 +26,14 @@ struct LocationSelectionView: View {
             
             ScrollView {
                 VStack(spacing: 12) {
-                    ForEach(locations, id: \.self) { location in
+                    ForEach(locations.keys.sorted(), id: \.self) { location in
                         Button {
                             selectedLocation = location
+                            if let coordinate = locations[location] {
+                                let newLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                                locationManager.location = newLocation
+                                locationManager.state = .authorized
+                            }
                         } label: {
                             Text(location)
                                 .font(.system(.body, design: .rounded))

@@ -5,15 +5,19 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \UserPreferences.maxDistance) private var preferences: [UserPreferences]
     @State private var selectedTheme: AppTheme = .system
+    @State private var currentPreferences: UserPreferences = UserPreferences()
     
-    private var currentPreferences: UserPreferences {
-        if let existing = preferences.first {
-            return existing
+    private var cuisinePreferencesLink: some View {
+        NavigationLink {
+            CuisineSelectionView(preferences: $currentPreferences)
+        } label: {
+            HStack {
+                Text("Cuisine Preferences")
+                Spacer()
+                Text("\(currentPreferences.cuisinePreferences.count) selected")
+                    .foregroundColor(.secondary)
+            }
         }
-        let new = UserPreferences()
-        modelContext.insert(new)
-        try? modelContext.save()
-        return new
     }
     
     var body: some View {
@@ -34,20 +38,7 @@ struct SettingsView: View {
                 }
                 
                 Section {
-                    NavigationLink {
-                        let preferences = currentPreferences
-                        CuisineSelectionView(preferences: Binding(
-                            get: { preferences },
-                            set: { _ in }
-                        ))
-                    } label: {
-                        HStack {
-                            Text("Cuisine Preferences")
-                            Spacer()
-                            Text("\(currentPreferences.cuisinePreferences.count) selected")
-                                .foregroundColor(.secondary)
-                        }
-                    }
+                    cuisinePreferencesLink
                     
                     NavigationLink {
                         Text("Dietary Restrictions Coming Soon")
@@ -74,7 +65,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Price Range")
                         Spacer()
-                        Text("\(currentPreferences.priceRange.count) selected")
+                        Text(String(repeating: "$", count: currentPreferences.priceRange))
                             .foregroundColor(.secondary)
                     }
                 } header: {
@@ -90,6 +81,7 @@ struct SettingsView: View {
                             modelContext.delete(existing)
                         }
                         try? modelContext.save()
+                        currentPreferences = new
                         selectedTheme = new.theme
                     } label: {
                         Text("Reset All Settings")
@@ -98,6 +90,14 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .onAppear {
+                if let existing = preferences.first {
+                    currentPreferences = existing
+                } else {
+                    let new = UserPreferences()
+                    modelContext.insert(new)
+                    try? modelContext.save()
+                    currentPreferences = new
+                }
                 selectedTheme = currentPreferences.theme
             }
         }
