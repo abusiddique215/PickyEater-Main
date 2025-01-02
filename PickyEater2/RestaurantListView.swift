@@ -8,6 +8,7 @@ struct RestaurantListView: View {
     @State private var isLoading = false
     @State private var error: Error?
     @State private var showingMap = false
+    @State private var showingProfile = false
     @Environment(\.appTheme) private var theme
     
     // Modern color scheme (matching CuisineSelectionView)
@@ -84,9 +85,11 @@ struct RestaurantListView: View {
                 NavigationBarButton(
                     title: "Profile",
                     icon: "person.fill",
-                    isActive: false,
+                    isActive: showingProfile,
                     color: colors.primary
-                )
+                ) {
+                    showingProfile.toggle()
+                }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
@@ -103,7 +106,7 @@ struct RestaurantListView: View {
                     Text("Recommended")
                         .font(.headline)
                         .foregroundColor(colors.text)
-                    if let location = locationManager.location {
+                    if locationManager.location != nil {
                         Text("Near You")
                             .font(.caption)
                             .foregroundColor(colors.primary)
@@ -121,6 +124,9 @@ struct RestaurantListView: View {
                         .foregroundColor(colors.primary)
                 }
             }
+        }
+        .sheet(isPresented: $showingProfile) {
+            ProfileView()
         }
     }
     
