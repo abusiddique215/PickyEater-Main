@@ -10,40 +10,107 @@ struct RestaurantListView: View {
     @State private var showingMap = false
     @Environment(\.appTheme) private var theme
     
+    // Modern color scheme (matching CuisineSelectionView)
+    private let colors = (
+        background: Color.black,
+        primary: Color(red: 0.98, green: 0.24, blue: 0.25),     // DoorDash red
+        secondary: Color(red: 0.97, green: 0.97, blue: 0.97),   // Light gray
+        text: Color.white,
+        cardBackground: Color(white: 0.12)                       // Slightly lighter than black
+    )
+    
     var body: some View {
-        Group {
-            switch locationManager.state {
-            case .notDetermined, .unavailable:
-                ContentUnavailableView {
-                    Label("Requesting Location Access", systemImage: locationManager.state.systemImage)
-                } description: {
-                    Text(locationManager.state.description)
-                }
-            case .restricted, .denied:
-                ContentUnavailableView {
-                    Label("Location Access Required", systemImage: locationManager.state.systemImage)
-                } description: {
-                    Text(locationManager.state.description)
-                } actions: {
-                    Button("Open Settings") {
-                        if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
-                        }
+        ZStack(alignment: .bottom) {
+            Group {
+                switch locationManager.state {
+                case .notDetermined, .unavailable:
+                    ContentUnavailableView {
+                        Label("Requesting Location Access", systemImage: locationManager.state.systemImage)
+                    } description: {
+                        Text(locationManager.state.description)
                     }
-                    .buttonStyle(.bordered)
-                }
-            case .authorized:
-                if locationManager.location != nil {
-                    restaurantList
-                } else {
-                    ProgressView("Getting your location...")
+                    .foregroundColor(colors.text)
+                case .restricted, .denied:
+                    ContentUnavailableView {
+                        Label("Location Access Required", systemImage: locationManager.state.systemImage)
+                    } description: {
+                        Text(locationManager.state.description)
+                    } actions: {
+                        Button("Open Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .foregroundColor(colors.text)
+                case .authorized:
+                    if locationManager.location != nil {
+                        restaurantList
+                    } else {
+                        ProgressView("Getting your location...")
+                            .tint(colors.primary)
+                            .foregroundColor(colors.text)
+                    }
                 }
             }
+            .background(colors.background)
+            
+            // Bottom Navigation Bar
+            HStack(spacing: 32) {
+                NavigationBarButton(
+                    title: "Home",
+                    icon: "house.fill",
+                    isActive: true,
+                    color: colors.primary
+                )
+                
+                NavigationBarButton(
+                    title: "Search",
+                    icon: "magnifyingglass",
+                    isActive: false,
+                    color: colors.primary
+                )
+                
+                NavigationBarButton(
+                    title: "Map",
+                    icon: "map",
+                    isActive: showingMap,
+                    color: colors.primary
+                ) {
+                    showingMap.toggle()
+                }
+                
+                NavigationBarButton(
+                    title: "Profile",
+                    icon: "person.fill",
+                    isActive: false,
+                    color: colors.primary
+                )
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(
+                Rectangle()
+                    .fill(colors.cardBackground)
+                    .shadow(color: .black.opacity(0.2), radius: 10, y: -5)
+            )
         }
-        .background(theme == .dark ? Color.black : Color.white)
-        .navigationTitle("Recommended Restaurants")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack {
+                    Text("Recommended")
+                        .font(.headline)
+                        .foregroundColor(colors.text)
+                    if let location = locationManager.location {
+                        Text("Near You")
+                            .font(.caption)
+                            .foregroundColor(colors.primary)
+                    }
+                }
+            }
+            
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     Task {
@@ -51,6 +118,7 @@ struct RestaurantListView: View {
                     }
                 } label: {
                     Image(systemName: "arrow.clockwise")
+                        .foregroundColor(colors.primary)
                 }
             }
         }
@@ -58,75 +126,19 @@ struct RestaurantListView: View {
     
     private var restaurantList: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                HStack {
-                    Text("RECOMMENDED EATS (\(restaurants.count))")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Button {
-                        showingMap.toggle()
-                    } label: {
-                        Label("Map View", systemImage: "map")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color.blue)
-                            .clipShape(Capsule())
-                    }
-                    
-                    Button {
-                        Task {
-                            await loadRestaurants(forceRefresh: true)
-                        }
-                    } label: {
-                        Label("NEW SELECTION", systemImage: "arrow.clockwise")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color.pink)
-                            .clipShape(Capsule())
+            VStack(spacing: 24) {
+                // Restaurant Cards
+                LazyVStack(spacing: 24) {
+                    ForEach(restaurants) { restaurant in
+                        ModernRestaurantCard(restaurant: restaurant, colors: colors)
+                            .padding(.horizontal)
                     }
                 }
-                .padding(.horizontal)
-                
-                if isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding()
-                } else if let error = error {
-                    ContentUnavailableView {
-                        Label("Error Loading Restaurants", systemImage: "exclamationmark.triangle")
-                    } description: {
-                        Text(error.localizedDescription)
-                    } actions: {
-                        Button("Try Again") {
-                            Task {
-                                await loadRestaurants(forceRefresh: true)
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                } else if restaurants.isEmpty {
-                    ContentUnavailableView {
-                        Label("No Restaurants Found", systemImage: "fork.knife")
-                    } description: {
-                        Text("Try adjusting your preferences or location")
-                    }
-                } else {
-                    LazyVStack(spacing: 16) {
-                        ForEach(restaurants) { restaurant in
-                            RecommendedRestaurantCard(restaurant: restaurant)
-                        }
-                    }
-                    .padding(.horizontal)
-                }
+                .padding(.vertical)
             }
-            .padding(.vertical)
+        }
+        .refreshable {
+            await loadRestaurants(forceRefresh: true)
         }
         .sheet(isPresented: $showingMap) {
             if let location = locationManager.location {
@@ -172,52 +184,20 @@ struct RestaurantListView: View {
     }
 }
 
-struct RecommendedRestaurantCard: View {
+struct ModernRestaurantCard: View {
     let restaurant: Restaurant
+    let colors: (
+        background: Color,
+        primary: Color,
+        secondary: Color,
+        text: Color,
+        cardBackground: Color
+    )
     @State private var isFavorite = false
-    @Environment(\.appTheme) private var theme
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(restaurant.name)
-                    .font(.title2)
-                    .bold()
-                Spacer()
-                Button {
-                    isFavorite.toggle()
-                } label: {
-                    Image(systemName: isFavorite ? "bookmark.fill" : "bookmark")
-                        .foregroundColor(.white)
-                }
-            }
-            
-            HStack {
-                Image(systemName: "location.fill")
-                Text("\(restaurant.location.address1), \(restaurant.location.city)")
-            }
-            .foregroundColor(.secondary)
-            
-            HStack {
-                Image(systemName: "star.fill")
-                    .foregroundColor(.yellow)
-                Text(String(format: "%.1f", restaurant.rating))
-                Text("(\(restaurant.reviewCount) reviews)")
-                    .foregroundColor(.secondary)
-                if let price = restaurant.price {
-                    Text("•")
-                        .foregroundColor(.secondary)
-                    Text(price)
-                        .foregroundColor(.green)
-                }
-            }
-            
-            HStack {
-                Image(systemName: "fork.knife")
-                Text(restaurant.categories.map { $0.title }.joined(separator: ", "))
-            }
-            .foregroundColor(.secondary)
-            
+            // Restaurant Image
             if let firstPhoto = restaurant.photos.first {
                 AsyncImage(url: URL(string: firstPhoto)) { image in
                     image
@@ -228,59 +208,131 @@ struct RecommendedRestaurantCard: View {
                         .fill(Color.gray.opacity(0.3))
                 }
                 .frame(height: 200)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-            
-            if let phone = restaurant.displayPhone {
-                HStack {
-                    Image(systemName: "phone.fill")
-                    Text(phone)
-                }
-                .foregroundColor(.secondary)
-            }
-            
-            HStack(spacing: 12) {
-                Button {
-                    // Open in Maps
-                    let query = "\(restaurant.location.address1), \(restaurant.location.city)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-                    if let url = URL(string: "maps://?q=\(query)") {
-                        UIApplication.shared.open(url)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(alignment: .topTrailing) {
+                    Button {
+                        isFavorite.toggle()
+                    } label: {
+                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                            .font(.title3)
+                            .foregroundColor(isFavorite ? colors.primary : .white)
+                            .padding(8)
+                            .background(Circle().fill(Color.black.opacity(0.6)))
+                            .padding(8)
                     }
-                } label: {
-                    Text("FIND DIRECTIONS")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.white)
-                        .foregroundColor(.black)
-                        .cornerRadius(8)
+                }
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                // Restaurant Name and Rating
+                HStack {
+                    Text(restaurant.name)
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(colors.text)
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 4) {
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                        Text(String(format: "%.1f", restaurant.rating))
+                            .fontWeight(.semibold)
+                            .foregroundColor(colors.text)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(colors.cardBackground)
+                    .cornerRadius(8)
                 }
                 
-                Button {
-                    // Show more info
-                } label: {
-                    Text("MORE INFO")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.white)
-                        .foregroundColor(.black)
-                        .cornerRadius(8)
+                // Categories and Price
+                HStack {
+                    Text(restaurant.categories.map { $0.title }.joined(separator: " • "))
+                        .font(.subheadline)
+                        .foregroundColor(colors.secondary)
+                    
+                    if let price = restaurant.price {
+                        Text("•")
+                            .foregroundColor(colors.secondary)
+                        Text(price)
+                            .font(.subheadline)
+                            .foregroundColor(.green)
+                    }
+                }
+                
+                // Location and Distance
+                HStack {
+                    Image(systemName: "location.fill")
+                        .foregroundColor(colors.primary)
+                    Text("\(restaurant.location.address1), \(restaurant.location.city)")
+                        .font(.subheadline)
+                        .foregroundColor(colors.secondary)
+                }
+                
+                // Action Buttons
+                HStack(spacing: 12) {
+                    Button {
+                        if let url = URL(string: "maps://?q=\(restaurant.location.address1)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        Label("Directions", systemImage: "location.fill")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(colors.text)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(colors.cardBackground)
+                            .cornerRadius(12)
+                    }
+                    
+                    if let phone = restaurant.displayPhone {
+                        Button {
+                            if let url = URL(string: "tel:\(phone)") {
+                                UIApplication.shared.open(url)
+                            }
+                        } label: {
+                            Label("Call", systemImage: "phone.fill")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(colors.text)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44)
+                                .background(colors.cardBackground)
+                                .cornerRadius(12)
+                        }
+                    }
                 }
             }
-            
-            Text("Tap to see more options")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.horizontal, 4)
         }
-        .padding()
-        .background(theme == .dark ? Color.black : Color.white)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(theme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.1), lineWidth: 1)
-        )
+        .padding(16)
+        .background(colors.cardBackground)
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.2), radius: 8)
+    }
+}
+
+struct NavigationBarButton: View {
+    let title: String
+    let icon: String
+    let isActive: Bool
+    let color: Color
+    var action: (() -> Void)? = nil
+    
+    var body: some View {
+        Button {
+            action?()
+        } label: {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                Text(title)
+                    .font(.caption2)
+            }
+            .foregroundColor(isActive ? color : .gray)
+        }
     }
 }
 
