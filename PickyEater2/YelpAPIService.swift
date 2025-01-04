@@ -59,17 +59,51 @@ class YelpAPIService {
         let latitude = String(format: "%.6f", location.coordinate.latitude)
         let longitude = String(format: "%.6f", location.coordinate.longitude)
         
+        // Create search terms based on dietary restrictions
+        var searchTerms = ["restaurants"]
+        var attributes: [String] = []
+        
+        // Handle dietary restrictions
+        for restriction in preferences.dietaryRestrictions {
+            switch restriction.lowercased() {
+            case "vegetarian":
+                searchTerms.append("vegetarian")
+                attributes.append("vegetarian")
+            case "vegan":
+                searchTerms.append("vegan")
+                attributes.append("vegan")
+            case "gluten-free":
+                searchTerms.append("gluten-free")
+                attributes.append("gluten_free")
+            case "halal":
+                searchTerms.append("halal")
+            case "kosher":
+                searchTerms.append("kosher")
+            case "dairy-free":
+                searchTerms.append("dairy-free")
+            default:
+                break
+            }
+        }
+        
         // Construct URL components manually to ensure proper encoding
         var components = URLComponents(string: "\(baseURL)/businesses/search")!
         components.queryItems = [
             URLQueryItem(name: "latitude", value: latitude),
             URLQueryItem(name: "longitude", value: longitude),
             URLQueryItem(name: "radius", value: String(radiusInMeters)),
-            URLQueryItem(name: "term", value: "restaurants"),
+            URLQueryItem(name: "term", value: searchTerms.joined(separator: " ")),
             URLQueryItem(name: "limit", value: "20"),
             URLQueryItem(name: "sort_by", value: "distance"),
             URLQueryItem(name: "price", value: String(preferences.priceRange))
         ]
+        
+        // Add attributes if any
+        if !attributes.isEmpty {
+            components.queryItems?.append(
+                URLQueryItem(name: "attributes", value: attributes.joined(separator: ","))
+            )
+        }
         
         // Add cuisine preferences if any
         if !preferences.cuisinePreferences.isEmpty {
@@ -111,12 +145,28 @@ class YelpAPIService {
                 let searchResponse = try decoder.decode(RestaurantSearchResponse.self, from: data)
                 print("✅ Found \(searchResponse.businesses.count) restaurants")
                 
-                if searchResponse.businesses.isEmpty {
-                    print("⚠️ No restaurants found with Yelp, trying Apple Maps...")
+                // Additional filtering for dietary restrictions that can't be handled by the API
+                let filteredRestaurants = searchResponse.businesses.filter { restaurant in
+                    // If no dietary restrictions, include all restaurants
+                    guard !preferences.dietaryRestrictions.isEmpty else { return true }
+                    
+                    // Check if restaurant categories or title contain any of our dietary keywords
+                    let restaurantKeywords = restaurant.categories.map { $0.title.lowercased() }
+                        .joined(separator: " ")
+                        .split(separator: " ")
+                        .map(String.init)
+                    
+                    return preferences.dietaryRestrictions.contains { restriction in
+                        restaurantKeywords.contains { $0.contains(restriction.lowercased()) }
+                    }
+                }
+                
+                if filteredRestaurants.isEmpty {
+                    print("⚠️ No restaurants found with specified dietary restrictions")
                     return try await searchWithAppleMaps(near: location)
                 }
                 
-                return searchResponse.businesses
+                return filteredRestaurants
                 
             case 401:
                 print("❌ Authentication failed - Invalid API key")

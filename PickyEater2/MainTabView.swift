@@ -2,10 +2,10 @@ import SwiftUI
 import SwiftData
 
 struct MainTabView: View {
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var selectedTab = 0
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \UserPreferences.maxDistance) private var preferences: [UserPreferences]
-    @State private var currentTheme: AppTheme = .system
+    @Query private var preferences: [UserPreferences]
     
     private var currentPreferences: UserPreferences {
         if let existing = preferences.first {
@@ -20,63 +20,52 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
-                ContentView()
+                RestaurantListView(preferences: currentPreferences)
             }
-            .tag(0)
             .tabItem {
                 Label("Home", systemImage: "house.fill")
             }
+            .tag(0)
             
             NavigationStack {
-                LocationSelectionView(preferences: .constant(currentPreferences))
+                Text("Search")
+                    .navigationTitle("Search")
+            }
+            .tabItem {
+                Label("Search", systemImage: "magnifyingglass")
             }
             .tag(1)
-            .tabItem {
-                Label("Explore", systemImage: "location.fill")
-            }
             
             NavigationStack {
-                Text("Stats Coming Soon")
-                    .navigationTitle("Stats")
+                Text("Map")
+                    .navigationTitle("Map")
+            }
+            .tabItem {
+                Label("Map", systemImage: "map")
             }
             .tag(2)
-            .tabItem {
-                Label("Stats", systemImage: "chart.bar.fill")
-            }
             
             NavigationStack {
-                SettingsView()
+                ProfileView()
+            }
+            .tabItem {
+                Label("Profile", systemImage: "person.fill")
             }
             .tag(3)
-            .tabItem {
-                Label("Settings", systemImage: "gearshape.fill")
-            }
         }
-        .modifier(ThemeModifier(theme: currentTheme))
-        .onChange(of: currentPreferences.theme) { _, newTheme in
-            withAnimation {
-                currentTheme = newTheme
-            }
-        }
+        .withTheme()
+        .modelContainer(for: UserPreferences.self)
         .task {
-            // Ensure preferences exist and set initial theme
             if preferences.isEmpty {
                 let new = UserPreferences()
                 modelContext.insert(new)
                 try? modelContext.save()
             }
-            currentTheme = currentPreferences.theme
         }
     }
 }
 
 #Preview {
-    do {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: UserPreferences.self, configurations: config)
-        return MainTabView()
-            .modelContainer(container)
-    } catch {
-        return Text("Failed to create preview: \(error.localizedDescription)")
-    }
+    MainTabView()
+        .modelContainer(for: UserPreferences.self, inMemory: true)
 } 

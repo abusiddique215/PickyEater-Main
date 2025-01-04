@@ -34,4 +34,22 @@ class ThemeManager: ObservableObject {
     func getCurrentTheme() -> ColorScheme {
         return isDarkMode ? .dark : .light
     }
+}
+
+// Theme modifier for views
+struct ThemeModifier: ViewModifier {
+    @ObservedObject private var themeManager = ThemeManager.shared
+    
+    func body(content: Content) -> some View {
+        content
+            .preferredColorScheme(themeManager.colorScheme)
+            .environment(\.appTheme, themeManager.colorScheme)
+    }
+}
+
+// Extension for easy theme application
+extension View {
+    func withTheme() -> some View {
+        modifier(ThemeModifier())
+    }
 } 
