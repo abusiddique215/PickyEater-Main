@@ -20,7 +20,7 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
-                RestaurantListView(preferences: currentPreferences)
+                HomeView(preferences: currentPreferences)
             }
             .tabItem {
                 Label("Home", systemImage: "house.fill")
@@ -28,8 +28,7 @@ struct MainTabView: View {
             .tag(0)
             
             NavigationStack {
-                Text("Search")
-                    .navigationTitle("Search")
+                RestaurantListView(preferences: currentPreferences)
             }
             .tabItem {
                 Label("Search", systemImage: "magnifyingglass")

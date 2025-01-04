@@ -3,7 +3,7 @@ import SwiftUI
 struct CuisineSelectionView: View {
     @Binding var preferences: UserPreferences
     @State private var selectedCuisines: Set<String> = []
-    @State private var navigateToRestaurants = false
+    @State private var navigateToMainTabView = false
     @Environment(\.dismiss) private var dismiss
     
     // Modern color scheme
@@ -102,7 +102,7 @@ struct CuisineSelectionView: View {
             // Next Button
             Button {
                 preferences.cuisinePreferences = Array(selectedCuisines)
-                navigateToRestaurants = true
+                navigateToMainTabView = true
             } label: {
                 HStack(spacing: 8) {
                     Text("NEXT")
@@ -128,8 +128,8 @@ struct CuisineSelectionView: View {
         }
         .background(colors.background.ignoresSafeArea())
         .preferredColorScheme(.dark)
-        .navigationDestination(isPresented: $navigateToRestaurants) {
-            RestaurantListView(preferences: preferences)
+        .navigationDestination(isPresented: $navigateToMainTabView) {
+            MainTabView()
         }
     }
 }

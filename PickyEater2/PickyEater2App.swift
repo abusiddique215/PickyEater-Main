@@ -14,10 +14,13 @@ struct PickyEater2App: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .modelContainer(for: UserPreferences.self)
-                .preferredColorScheme(themeManager.colorScheme)
-                .environment(\.appTheme, themeManager.colorScheme)
+            NavigationStack {
+                // 1) Start here with CuisineSelectionView
+                CuisineSelectionView(preferences: .constant(UserPreferences()))
+            }
+            .modelContainer(for: UserPreferences.self)
+            .preferredColorScheme(themeManager.colorScheme)
+            .environment(\.appTheme, themeManager.colorScheme)
         }
     }
 }

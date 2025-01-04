@@ -9,6 +9,7 @@ struct RestaurantListView: View {
     @State private var error: Error?
     @State private var showingMap = false
     @State private var showingProfile = false
+    @State private var showingPreferences = false
     @Environment(\.appTheme) private var theme
     
     // Modern color scheme (matching CuisineSelectionView)
@@ -136,6 +137,9 @@ struct RestaurantListView: View {
         }
         .sheet(isPresented: $showingProfile) {
             ProfileView()
+        }
+        .sheet(isPresented: $showingPreferences) {
+            PreferencesView(preferences: .constant(preferences))
         }
     }
     

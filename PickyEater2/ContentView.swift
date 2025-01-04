@@ -41,15 +41,6 @@ struct ContentView: View {
                         }
                     ))
                 }
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showingPreferences.toggle()
-                        } label: {
-                            Image(systemName: "slider.horizontal.3")
-                        }
-                    }
-                }
         }
         .task {
             if preferences.isEmpty {
