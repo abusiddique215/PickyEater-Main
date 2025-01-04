@@ -1,10 +1,117 @@
 import SwiftUI
 import CoreLocation
 
+// 1. Create two separate category models
+struct StoreCategory: Identifiable {
+    let id = UUID()
+    let name: String
+    let iconName: String
+    let type: String // To differentiate between store and food category
+    
+    static let stores = [
+        StoreCategory(name: "King's Teriyaki", iconName: "kings_logo", type: "store"),
+        StoreCategory(name: "Burger King", iconName: "bk_logo", type: "store"),
+        StoreCategory(name: "McDonald's", iconName: "mcdonalds_logo", type: "store"),
+        StoreCategory(name: "Subway", iconName: "subway_logo", type: "store"),
+        StoreCategory(name: "Domino's", iconName: "dominos_logo", type: "store")
+    ]
+    
+    static let foodCategories = [
+        StoreCategory(name: "Sushi", iconName: "circle.grid.2x2.fill", type: "food"),
+        StoreCategory(name: "Pizza", iconName: "triangle.fill", type: "food"),
+        StoreCategory(name: "Halal", iconName: "moon.fill", type: "food"),
+        StoreCategory(name: "Chinese", iconName: "takeoutbag.and.cup.and.straw.fill", type: "food"),
+        StoreCategory(name: "Thai", iconName: "leaf.fill", type: "food")
+    ]
+}
+
+// 2. Create a reusable horizontal scroll section
+struct CategoryScrollSection: View {
+    let title: String
+    let categories: [StoreCategory]
+    let colors: (
+        background: Color,
+        primary: Color,
+        secondary: Color,
+        text: Color,
+        cardBackground: Color,
+        searchBackground: Color
+    )
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(title)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(colors.text)
+                .padding(.horizontal)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 15) {
+                    ForEach(categories) { category in
+                        CategoryCircle(category: category, colors: colors)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 5)
+            }
+        }
+        .padding(.top, 5)
+    }
+}
+
+// 3. Create a unified circle view for both types
+struct CategoryCircle: View {
+    let category: StoreCategory
+    let colors: (
+        background: Color,
+        primary: Color,
+        secondary: Color,
+        text: Color,
+        cardBackground: Color,
+        searchBackground: Color
+    )
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(Color(white: 0.15))
+                    .frame(width: 65, height: 65)
+                    .shadow(color: .black.opacity(0.2), radius: 2)
+                
+                if category.type == "store" {
+                    // For store logos, use custom images
+                    Image(category.iconName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
+                        .clipShape(Circle())
+                } else {
+                    // For food categories, use SF Symbols
+                    Image(systemName: category.iconName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30)
+                        .foregroundColor(.white)
+                }
+            }
+            
+            Text(category.name)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(colors.text)
+                .lineLimit(1)
+        }
+        .frame(width: 75)
+    }
+}
+
 struct HomeView: View {
     let preferences: UserPreferences
     @StateObject private var locationManager = LocationManager()
     @State private var searchText = ""
+    @State private var featuredRestaurants: [Restaurant] = []
+    @State private var isLoading = false
     
     // Modern color scheme (matching our theme)
     private let colors = (
@@ -16,153 +123,166 @@ struct HomeView: View {
         searchBackground: Color(white: 0.08)                     // Even darker for search bar
     )
     
-    // Cuisine categories with icons
-    private let categories = [
-        ("Sushi", "🍱"),
-        ("Pizza", "🍕"),
-        ("Halal", "🥙"),
-        ("Chinese", "🥡"),
-        ("Thai", "🍜"),
-        ("Indian", "🍛"),
-        ("Italian", "🍝"),
-        ("Mexican", "🌮")
-    ]
-    
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Location and Profile Header
-                    HStack {
-                        // Location Button
-                        Button {
-                            // Handle location selection
-                        } label: {
-                            HStack {
-                                if let address = locationManager.address {
-                                    Text(address)
-                                        .font(.headline)
-                                        .foregroundColor(colors.text)
-                                } else {
-                                    Text("Set Location")
-                                        .font(.headline)
-                                        .foregroundColor(colors.text)
-                                }
-                                Image(systemName: "chevron.down")
-                                    .foregroundColor(colors.primary)
+        ScrollView {
+            VStack(spacing: 24) {
+                // Location and Profile Header
+                HStack {
+                    // Location Button
+                    Button {
+                        // Handle location selection
+                    } label: {
+                        HStack {
+                            if let address = locationManager.address {
+                                Text(address)
+                                    .font(.headline)
+                                    .foregroundColor(colors.text)
+                            } else {
+                                Text("Set Location")
+                                    .font(.headline)
+                                    .foregroundColor(colors.text)
                             }
+                            Image(systemName: "chevron.down")
+                                .foregroundColor(colors.primary)
                         }
+                    }
+                    
+                    Spacer()
+                    
+                    // Profile Button
+                    Button {
+                        // Handle profile
+                    } label: {
+                        Image(systemName: "person.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(colors.primary)
+                    }
+                }
+                .padding(.horizontal)
+                
+                // Search Bar
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(Color.gray)
+                    TextField("Search for restaurants", text: $searchText)
+                        .foregroundColor(colors.text)
+                }
+                .padding()
+                .background(colors.searchBackground)
+                .cornerRadius(15)
+                .padding(.horizontal)
+                
+                // Stores Near You Section
+                CategoryScrollSection(
+                    title: "Stores near you",
+                    categories: StoreCategory.stores,
+                    colors: colors
+                )
+                
+                // Food Categories Section
+                CategoryScrollSection(
+                    title: "Food Categories",
+                    categories: StoreCategory.foodCategories,
+                    colors: colors
+                )
+                
+                // Featured Restaurants Section
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("Featured on Picky Eater")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(colors.text)
                         
                         Spacer()
                         
-                        // Profile Button
                         Button {
-                            // Handle profile
+                            // Handle see all
                         } label: {
-                            Image(systemName: "person.circle.fill")
-                                .font(.title2)
+                            Text("See All")
+                                .font(.subheadline)
                                 .foregroundColor(colors.primary)
                         }
                     }
                     .padding(.horizontal)
                     
-                    // Search Bar
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(Color.gray)
-                        TextField("Search for restaurants", text: $searchText)
-                            .foregroundColor(colors.text)
-                    }
-                    .padding()
-                    .background(colors.searchBackground)
-                    .cornerRadius(15)
-                    .padding(.horizontal)
-                    
-                    // Cuisine Categories
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 16) {
-                            ForEach(categories, id: \.0) { category in
-                                VStack {
-                                    Text(category.1)
-                                        .font(.system(size: 30))
-                                    Text(category.0)
-                                        .font(.caption)
-                                        .foregroundColor(colors.text)
-                                }
-                                .frame(width: 70, height: 70)
-                                .background(colors.cardBackground)
-                                .cornerRadius(12)
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                    
-                    // Featured Section
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Text("Featured Restaurants")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(colors.text)
-                            
-                            Spacer()
-                            
-                            Button {
-                                // Show all
-                            } label: {
-                                Text("See All")
-                                    .foregroundColor(colors.primary)
-                            }
-                        }
-                        .padding(.horizontal)
-                        
+                    if isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 16) {
-                                ForEach(0..<5) { _ in
-                                    FeaturedRestaurantCard(colors: colors)
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
-                    }
-                    
-                    // Recent Orders Section
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Text("Order Again")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(colors.text)
-                            
-                            Spacer()
-                            
-                            Button {
-                                // Show all
-                            } label: {
-                                Text("See All")
-                                    .foregroundColor(colors.primary)
-                            }
-                        }
-                        .padding(.horizontal)
-                        
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 16) {
-                                ForEach(0..<5) { _ in
-                                    RecentOrderCard(colors: colors)
+                                ForEach(featuredRestaurants) { restaurant in
+                                    FeaturedRestaurantCard(restaurant: restaurant, colors: colors)
                                 }
                             }
                             .padding(.horizontal)
                         }
                     }
                 }
-                .padding(.vertical)
+                
+                // Places You Might Like Section
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("Places you might like")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(colors.text)
+                        
+                        Spacer()
+                        
+                        Button("See All") {
+                            // Handle see all
+                        }
+                        .foregroundColor(colors.primary)
+                    }
+                    .padding(.horizontal)
+                    
+                    if isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 16) {
+                                ForEach(featuredRestaurants.prefix(5)) { restaurant in
+                                    RecentOrderCard(restaurant: restaurant, colors: colors)
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+                }
             }
-            .background(colors.background.ignoresSafeArea())
+            .padding(.vertical)
+        }
+        .background(colors.background.ignoresSafeArea())
+        .task {
+            await loadFeaturedRestaurants()
+        }
+    }
+    
+    private func loadFeaturedRestaurants() async {
+        guard !isLoading else { return }
+        guard let location = locationManager.location else { return }
+        
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            featuredRestaurants = try await YelpAPIService.shared.searchRestaurants(
+                near: location,
+                preferences: preferences
+            )
+        } catch {
+            print("Error loading restaurants: \(error)")
+            featuredRestaurants = []
         }
     }
 }
 
+// Update FeaturedRestaurantCard to use actual restaurant data
 struct FeaturedRestaurantCard: View {
+    let restaurant: Restaurant
     let colors: (
         background: Color,
         primary: Color,
@@ -175,33 +295,54 @@ struct FeaturedRestaurantCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Restaurant Image
-            Rectangle()
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 250, height: 150)
-                .cornerRadius(12)
-                .overlay(
-                    Image(systemName: "photo")
-                        .font(.largeTitle)
-                        .foregroundColor(colors.secondary)
-                )
+            AsyncImage(url: URL(string: restaurant.imageUrl)) { phase in
+                switch phase {
+                case .empty:
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay {
+                            ProgressView()
+                                .tint(colors.primary)
+                        }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                case .failure(_):
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay {
+                            Image(systemName: "photo")
+                                .font(.largeTitle)
+                                .foregroundColor(colors.secondary)
+                        }
+                @unknown default:
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                }
+            }
+            .frame(width: 250, height: 150)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             
             // Restaurant Info
             VStack(alignment: .leading, spacing: 4) {
-                Text("Restaurant Name")
+                Text(restaurant.name)
                     .font(.headline)
                     .foregroundColor(colors.text)
                 
                 HStack {
                     Image(systemName: "star.fill")
                         .foregroundColor(.yellow)
-                    Text("4.5")
+                    Text(String(format: "%.1f", restaurant.rating))
                         .foregroundColor(colors.text)
-                    Text("(500+)")
+                    Text("(\(restaurant.reviewCount))")
                         .foregroundColor(colors.secondary)
                     Text("•")
                         .foregroundColor(colors.secondary)
-                    Text("15-25 min")
-                        .foregroundColor(colors.secondary)
+                    if let distance = restaurant.distance {
+                        Text(String(format: "%.1f km", distance / 1000))
+                            .foregroundColor(colors.secondary)
+                    }
                 }
                 .font(.caption)
             }
@@ -213,7 +354,9 @@ struct FeaturedRestaurantCard: View {
     }
 }
 
+// Update RecentOrderCard to use actual restaurant data
 struct RecentOrderCard: View {
+    let restaurant: Restaurant
     let colors: (
         background: Color,
         primary: Color,
@@ -226,25 +369,46 @@ struct RecentOrderCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Restaurant Image
-            Rectangle()
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 200, height: 120)
-                .cornerRadius(12)
-                .overlay(
-                    Image(systemName: "photo")
-                        .font(.largeTitle)
-                        .foregroundColor(colors.secondary)
-                )
+            AsyncImage(url: URL(string: restaurant.imageUrl)) { phase in
+                switch phase {
+                case .empty:
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay {
+                            ProgressView()
+                                .tint(colors.primary)
+                        }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                case .failure(_):
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay {
+                            Image(systemName: "photo")
+                                .font(.largeTitle)
+                                .foregroundColor(colors.secondary)
+                        }
+                @unknown default:
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                }
+            }
+            .frame(width: 200, height: 120)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             
             // Restaurant Info
             VStack(alignment: .leading, spacing: 4) {
-                Text("Restaurant Name")
+                Text(restaurant.name)
                     .font(.headline)
                     .foregroundColor(colors.text)
                 
-                Text("20 min")
-                    .font(.caption)
-                    .foregroundColor(colors.secondary)
+                if let distance = restaurant.distance {
+                    Text(String(format: "%.1f km", distance / 1000))
+                        .font(.caption)
+                        .foregroundColor(colors.secondary)
+                }
             }
             .padding(.horizontal, 4)
         }
