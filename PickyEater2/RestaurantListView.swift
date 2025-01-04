@@ -124,6 +124,15 @@ struct RestaurantListView: View {
                         .foregroundColor(colors.primary)
                 }
             }
+            
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    showingPreferences.toggle()
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .foregroundColor(colors.primary)
+                }
+            }
         }
         .sheet(isPresented: $showingProfile) {
             ProfileView()
