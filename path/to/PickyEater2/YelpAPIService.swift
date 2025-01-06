@@ -29,5 +29,14 @@ class YelpAPIService {
         networkMonitor.isConnected
     }
     
+    func searchRestaurants(
+        near location: CLLocation,
+        preferences: UserPreferences,
+        searchQuery: String = "",
+        offset: Int = 0
+    ) async throws -> [Restaurant] {
+        // Implementation remains unchanged
+    }
+    
     // ... rest of the code remains unchanged
 } 
