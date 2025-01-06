@@ -1,51 +1,83 @@
 import LocalAuthentication
 import SwiftUI
 
+enum AuthenticationError: Error {
+    case notAvailable
+    case failed(String)
+    case cancelled
+    case denied
+    
+    var localizedDescription: String {
+        switch self {
+        case .notAvailable:
+            return "Biometric authentication is not available"
+        case .failed(let message):
+            return message
+        case .cancelled:
+            return "Authentication was cancelled"
+        case .denied:
+            return "Authentication was denied"
+        }
+    }
+}
+
+@MainActor
 class AuthenticationService: ObservableObject {
     @Published var isAuthenticated = false
-    @Published var biometricType: LABiometryType = .none
-    @Published var error: Error?
+    private let context = LAContext()
     
-    init() {
-        getBiometricType()
-    }
-    
-    private func getBiometricType() {
-        let context = LAContext()
-        var error: NSError?
-        
-        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
-            biometricType = context.biometryType
+    var biometricType: String {
+        switch context.biometryType {
+        case .faceID:
+            return "Face ID"
+        case .touchID:
+            return "Touch ID"
+        default:
+            return "None"
         }
     }
     
-    func authenticate() async {
+    func authenticate() async throws {
+        // Reset context for each authentication attempt
         let context = LAContext()
         var error: NSError?
         
         guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
-            await MainActor.run {
-                self.error = error
-                self.isAuthenticated = false
-            }
-            return
+            throw AuthenticationError.notAvailable
         }
         
         do {
             let success = try await context.evaluatePolicy(
                 .deviceOwnerAuthenticationWithBiometrics,
-                localizedReason: "Authenticate to access your food preferences"
+                localizedReason: "Authenticate to access your preferences"
             )
             
-            await MainActor.run {
-                self.isAuthenticated = success
-                self.error = nil
+            if success {
+                await MainActor.run {
+                    self.isAuthenticated = true
+                }
+            } else {
+                throw AuthenticationError.failed("Authentication failed")
             }
-        } catch {
-            await MainActor.run {
-                self.error = error
-                self.isAuthenticated = false
+        } catch let error as LAError {
+            switch error.code {
+            case .userCancel:
+                throw AuthenticationError.cancelled
+            case .userFallback:
+                throw AuthenticationError.cancelled
+            case .biometryNotAvailable:
+                throw AuthenticationError.notAvailable
+            case .biometryNotEnrolled:
+                throw AuthenticationError.notAvailable
+            case .biometryLockout:
+                throw AuthenticationError.denied
+            default:
+                throw AuthenticationError.failed(error.localizedDescription)
             }
         }
+    }
+    
+    func signOut() {
+        isAuthenticated = false
     }
 } 

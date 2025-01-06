@@ -95,17 +95,44 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        // Handle notification tap
         let identifier = response.notification.request.identifier
         let userInfo = response.notification.request.content.userInfo
         
         // Handle different notification types
         if identifier.starts(with: "restaurant-reminder-") {
             let restaurantId = identifier.replacingOccurrences(of: "restaurant-reminder-", with: "")
-            // Handle restaurant reminder tap
-            print("Tapped restaurant reminder for ID: \(restaurantId)")
+            handleRestaurantReminder(restaurantId: restaurantId, userInfo: userInfo)
+        } else if let type = userInfo["type"] as? String {
+            switch type {
+            case "order_status":
+                if let status = userInfo["status"] as? String {
+                    handleOrderStatus(status: status)
+                }
+            case "promotion":
+                if let message = userInfo["message"] as? String {
+                    handlePromotion(message: message)
+                }
+            default:
+                break
+            }
         }
         
         completionHandler()
+    }
+    
+    private func handleRestaurantReminder(restaurantId: String, userInfo: [AnyHashable: Any]) {
+        // Handle restaurant reminder tap
+        print("Opening restaurant details for ID: \(restaurantId)")
+        // TODO: Navigate to restaurant details
+    }
+    
+    private func handleOrderStatus(status: String) {
+        print("Order status updated: \(status)")
+        // TODO: Update order status in UI
+    }
+    
+    private func handlePromotion(message: String) {
+        print("Received promotion: \(message)")
+        // TODO: Show promotion in UI
     }
 } 
