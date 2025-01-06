@@ -113,6 +113,8 @@ struct HomeView: View {
     @State private var featuredRestaurants: [Restaurant] = []
     @State private var isLoading = false
     @State private var storesNearYou: [Restaurant] = []
+    @State private var error: NetworkError?
+    @State private var showError = false
     
     // Modern color scheme (matching our theme)
     private let colors = (
@@ -125,183 +127,210 @@ struct HomeView: View {
     )
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Location and Profile Header
-                HStack {
-                    // Location Button
-                    Button {
-                        // Handle location selection
-                    } label: {
+        ZStack {
+            colors.background
+                .ignoresSafeArea()
+            
+            if isLoading {
+                ProgressView()
+                    .tint(colors.primary)
+            } else if let error = error {
+                ErrorView(error: error) {
+                    Task {
+                        await loadFeaturedRestaurants()
+                        await loadStoresNearYou()
+                    }
+                }
+            } else {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Location and Profile Header
                         HStack {
-                            if let address = locationManager.address {
-                                Text(address)
-                                    .font(.headline)
-                                    .foregroundColor(colors.text)
-                            } else {
-                                Text("Set Location")
-                                    .font(.headline)
-                                    .foregroundColor(colors.text)
+                            // Location Button
+                            Button {
+                                // Handle location selection
+                            } label: {
+                                HStack {
+                                    if let address = locationManager.address {
+                                        Text(address)
+                                            .font(.headline)
+                                            .foregroundColor(colors.text)
+                                    } else {
+                                        Text("Set Location")
+                                            .font(.headline)
+                                            .foregroundColor(colors.text)
+                                    }
+                                    Image(systemName: "chevron.down")
+                                        .foregroundColor(colors.primary)
+                                }
                             }
-                            Image(systemName: "chevron.down")
-                                .foregroundColor(colors.primary)
+                            
+                            Spacer()
+                            
+                            // Profile Button
+                            Button {
+                                // Handle profile
+                            } label: {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(colors.primary)
+                            }
                         }
-                    }
-                    
-                    Spacer()
-                    
-                    // Profile Button
-                    Button {
-                        // Handle profile
-                    } label: {
-                        Image(systemName: "person.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(colors.primary)
-                    }
-                }
-                .padding(.horizontal)
-                
-                // Search Bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(Color.gray)
-                    TextField("Search for restaurants", text: $searchText)
-                        .foregroundColor(colors.text)
-                }
-                .padding()
-                .background(colors.searchBackground)
-                .cornerRadius(15)
-                .padding(.horizontal)
-                
-                // Stores Near You Section
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Stores near you")
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(colors.text)
                         .padding(.horizontal)
+                        
+                        // Search Bar
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(Color.gray)
+                            TextField("Search for restaurants", text: $searchText)
+                                .foregroundColor(colors.text)
+                        }
+                        .padding()
+                        .background(colors.searchBackground)
+                        .cornerRadius(15)
+                        .padding(.horizontal)
+                        
+                        // Stores Near You Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Stores near you")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundColor(colors.text)
+                                .padding(.horizontal)
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 15) {
-                            ForEach(storesNearYou) { store in
-                                VStack(spacing: 8) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color(white: 0.15))
-                                            .frame(width: 65, height: 65)
-                                            .shadow(color: .black.opacity(0.2), radius: 2)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 15) {
+                                    ForEach(storesNearYou) { store in
+                                        VStack(spacing: 8) {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(Color(white: 0.15))
+                                                    .frame(width: 65, height: 65)
+                                                    .shadow(color: .black.opacity(0.2), radius: 2)
 
-                                        AsyncImage(url: URL(string: store.imageUrl)) { phase in
-                                            switch phase {
-                                            case .empty:
-                                                ProgressView()
-                                                    .tint(colors.primary)
-                                            case .success(let image):
-                                                image
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: 40, height: 40)
-                                                    .clipShape(Circle())
-                                            case .failure(_):
-                                                Image(systemName: "photo")
-                                                    .font(.largeTitle)
-                                                    .foregroundColor(colors.secondary)
-                                            @unknown default:
-                                                EmptyView()
+                                                AsyncImage(url: URL(string: store.imageUrl)) { phase in
+                                                    switch phase {
+                                                    case .empty:
+                                                        ProgressView()
+                                                            .tint(colors.primary)
+                                                    case .success(let image):
+                                                        image
+                                                            .resizable()
+                                                            .scaledToFit()
+                                                            .frame(width: 40, height: 40)
+                                                            .clipShape(Circle())
+                                                    case .failure(_):
+                                                        Image(systemName: "photo")
+                                                            .font(.largeTitle)
+                                                            .foregroundColor(colors.secondary)
+                                                    @unknown default:
+                                                        EmptyView()
+                                                    }
+                                                }
                                             }
+                                            Text(store.name)
+                                                .font(.system(size: 12, weight: .medium))
+                                                .foregroundColor(colors.text)
+                                                .lineLimit(1)
+                                        }
+                                        .frame(width: 75)
+                                    }
+                                }
+                                .padding(.horizontal)
+                                .padding(.vertical, 5)
+                            }
+                        }
+                        .padding(.top, 5)
+                        
+                        // Food Categories Section
+                        CategoryScrollSection(
+                            title: "Food Categories",
+                            categories: StoreCategory.foodCategories,
+                            colors: colors
+                        )
+                        
+                        // Featured Restaurants Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("Featured on Picky Eater")
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(colors.text)
+                                
+                                Spacer()
+                                
+                                Button {
+                                    // Handle see all
+                                } label: {
+                                    Text("See All")
+                                        .font(.subheadline)
+                                        .foregroundColor(colors.primary)
+                                }
+                            }
+                            .padding(.horizontal)
+                            
+                            if isLoading {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 16) {
+                                        ForEach(featuredRestaurants) { restaurant in
+                                            FeaturedRestaurantCard(restaurant: restaurant, colors: colors)
                                         }
                                     }
-                                    Text(store.name)
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundColor(colors.text)
-                                        .lineLimit(1)
+                                    .padding(.horizontal)
                                 }
-                                .frame(width: 75)
                             }
                         }
-                        .padding(.horizontal)
-                        .padding(.vertical, 5)
-                    }
-                }
-                .padding(.top, 5)
-                
-                // Food Categories Section
-                CategoryScrollSection(
-                    title: "Food Categories",
-                    categories: StoreCategory.foodCategories,
-                    colors: colors
-                )
-                
-                // Featured Restaurants Section
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        Text("Featured on Picky Eater")
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundColor(colors.text)
                         
-                        Spacer()
-                        
-                        Button {
-                            // Handle see all
-                        } label: {
-                            Text("See All")
-                                .font(.subheadline)
+                        // Places You Might Like Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("Places you might like")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(colors.text)
+                                
+                                Spacer()
+                                
+                                Button("See All") {
+                                    // Handle see all
+                                }
                                 .foregroundColor(colors.primary)
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    if isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 16) {
-                                ForEach(featuredRestaurants) { restaurant in
-                                    FeaturedRestaurantCard(restaurant: restaurant, colors: colors)
-                                }
                             }
                             .padding(.horizontal)
-                        }
-                    }
-                }
-                
-                // Places You Might Like Section
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        Text("Places you might like")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(colors.text)
-                        
-                        Spacer()
-                        
-                        Button("See All") {
-                            // Handle see all
-                        }
-                        .foregroundColor(colors.primary)
-                    }
-                    .padding(.horizontal)
-                    
-                    if isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                    } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 16) {
-                                ForEach(featuredRestaurants.prefix(5)) { restaurant in
-                                    RecentOrderCard(restaurant: restaurant, colors: colors)
+                            
+                            if isLoading {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 16) {
+                                        ForEach(featuredRestaurants.prefix(5)) { restaurant in
+                                            RecentOrderCard(restaurant: restaurant, colors: colors)
+                                        }
+                                    }
+                                    .padding(.horizontal)
                                 }
                             }
-                            .padding(.horizontal)
                         }
                     }
+                    .padding(.vertical)
                 }
             }
-            .padding(.vertical)
         }
-        .background(colors.background.ignoresSafeArea())
+        .alert("Error", isPresented: $showError, presenting: error) { _ in
+            Button("OK") { }
+            Button("Retry") {
+                Task {
+                    await loadFeaturedRestaurants()
+                    await loadStoresNearYou()
+                }
+            }
+        } message: { error in
+            Text(error.localizedDescription)
+        }
         .task {
             await loadFeaturedRestaurants()
             await loadStoresNearYou()
@@ -310,32 +339,59 @@ struct HomeView: View {
     
     private func loadFeaturedRestaurants() async {
         guard !isLoading else { return }
-        guard let location = locationManager.location else { return }
+        guard let location = locationManager.location else {
+            error = NetworkError.apiError("Location services are not available")
+            showError = true
+            return
+        }
         
         isLoading = true
-        defer { isLoading = false }
+        error = nil
         
         do {
             featuredRestaurants = try await YelpAPIService.shared.searchRestaurants(
                 near: location,
                 preferences: preferences
             )
+            if featuredRestaurants.isEmpty {
+                error = NetworkError.apiError("No restaurants found matching your criteria")
+            }
+        } catch let networkError as NetworkError {
+            error = networkError
+            showError = true
+            featuredRestaurants = []
         } catch {
-            print("Error loading restaurants: \(error)")
+            self.error = NetworkError.apiError(error.localizedDescription)
+            showError = true
             featuredRestaurants = []
         }
+        
+        isLoading = false
     }
     
     private func loadStoresNearYou() async {
-        guard let location = locationManager.location else { return }
+        guard let location = locationManager.location else {
+            error = NetworkError.apiError("Location services are not available")
+            showError = true
+            return
+        }
+        
         do {
             self.storesNearYou = try await YelpAPIService.shared.searchRestaurants(
                 near: location,
                 preferences: preferences
             )
+            if storesNearYou.isEmpty {
+                error = NetworkError.apiError("No stores found near you")
+            }
+        } catch let networkError as NetworkError {
+            error = networkError
+            showError = true
+            storesNearYou = []
         } catch {
-            print("Error loading 'stores near you': \(error)")
-            self.storesNearYou = []
+            self.error = NetworkError.apiError(error.localizedDescription)
+            showError = true
+            storesNearYou = []
         }
     }
 }

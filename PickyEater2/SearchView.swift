@@ -9,6 +9,8 @@ struct SearchView: View {
     @State private var isSearching = false
     @State private var recentSearches: [String] = []
     @State private var restaurants: [Restaurant] = []
+    @State private var error: NetworkError?
+    @State private var showError = false
     
     // Modern color scheme (matching our theme)
     private let colors = (
@@ -26,57 +28,58 @@ struct SearchView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
+            ZStack {
+                colors.background
+                    .ignoresSafeArea()
+                
+                VStack {
                     // Search Bar
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(Color.gray)
-                        TextField("Search for restaurants", text: $searchText)
-                            .foregroundColor(colors.text)
-                    }
-                    .padding()
-                    .background(colors.searchBackground)
-                    .cornerRadius(15)
-                    .padding(.horizontal)
+                    SearchBar(text: $searchText, isSearching: $isSearching, colors: colors)
+                        .padding(.horizontal)
                     
-                    // Recent Searches
-                    if !recentSearches.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Recent Searches")
-                                .font(.headline)
-                                .foregroundColor(colors.text)
-                                .padding(.horizontal)
-                            
-                            ForEach(recentSearches, id: \.self) { search in
-                                Button(action: {
-                                    searchText = search
-                                    performSearch()
-                                }) {
-                                    HStack {
-                                        Image(systemName: "clock")
-                                            .foregroundColor(colors.secondary)
-                                        Text(search)
-                                            .foregroundColor(colors.text)
-                                        Spacer()
-                                        Image(systemName: "arrow.right")
-                                            .foregroundColor(colors.primary)
-                                    }
-                                    .padding(.horizontal)
-                                    .padding(.vertical, 8)
-                                    .background(colors.cardBackground)
-                                    .cornerRadius(10)
-                                }
+                    if isSearching {
+                        ProgressView()
+                            .tint(colors.primary)
+                    } else if let error = error {
+                        ErrorView(error: error) {
+                            Task {
+                                await loadSearchResults()
                             }
                         }
-                        .padding(.top)
-                    }
-                    
-                    // Search Results
-                    if isSearching {
-                        ProgressView("Searching...")
-                            .padding()
                     } else {
+                        // Recent Searches
+                        if !recentSearches.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Recent Searches")
+                                    .font(.headline)
+                                    .foregroundColor(colors.text)
+                                    .padding(.horizontal)
+                                
+                                ForEach(recentSearches, id: \.self) { search in
+                                    Button(action: {
+                                        searchText = search
+                                        performSearch()
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "clock")
+                                                .foregroundColor(colors.secondary)
+                                            Text(search)
+                                                .foregroundColor(colors.text)
+                                            Spacer()
+                                            Image(systemName: "arrow.right")
+                                                .foregroundColor(colors.primary)
+                                        }
+                                        .padding(.horizontal)
+                                        .padding(.vertical, 8)
+                                        .background(colors.cardBackground)
+                                        .cornerRadius(10)
+                                    }
+                                }
+                            }
+                            .padding(.top)
+                        }
+                        
+                        // Search Results
                         if !restaurants.isEmpty {
                             ForEach(restaurants) { restaurant in
                                 NavigationLink(destination: RestaurantDetailView(restaurant: restaurant)) {
@@ -92,17 +95,18 @@ struct SearchView: View {
                         }
                     }
                 }
-                .padding(.vertical)
             }
             .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        isSearching = false
-                        searchText = ""
+            .alert("Error", isPresented: $showError, presenting: error) { _ in
+                Button("OK") { }
+                Button("Retry") {
+                    Task {
+                        await loadSearchResults()
                     }
                 }
+            } message: { error in
+                Text(error.localizedDescription)
             }
             .onSubmit(of: .search) {
                 performSearch()
@@ -125,6 +129,8 @@ struct SearchView: View {
     
     private func loadSearchResults() async {
         guard let location = locationManager.location else {
+            error = NetworkError.apiError("Location services are not available")
+            showError = true
             isSearching = false
             return
         }
@@ -135,13 +141,26 @@ struct SearchView: View {
                 preferences: currentPreferences,
                 searchQuery: searchText
             )
+            
             DispatchQueue.main.async {
                 restaurants = results
+                if results.isEmpty {
+                    error = NetworkError.apiError("No restaurants found matching '\(searchText)'")
+                    showError = true
+                }
+                isSearching = false
+            }
+        } catch let networkError as NetworkError {
+            DispatchQueue.main.async {
+                error = networkError
+                showError = true
+                restaurants = []
                 isSearching = false
             }
         } catch {
-            print("Error during search: \(error)")
             DispatchQueue.main.async {
+                self.error = NetworkError.apiError(error.localizedDescription)
+                showError = true
                 restaurants = []
                 isSearching = false
             }

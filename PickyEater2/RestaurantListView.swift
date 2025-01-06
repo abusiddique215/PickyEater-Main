@@ -4,188 +4,101 @@ import CoreLocation
 struct RestaurantListView: View {
     let preferences: UserPreferences
     let searchQuery: String
-
-    // Explicit initializer with default value for searchQuery
+    
     init(preferences: UserPreferences, searchQuery: String = "") {
         self.preferences = preferences
         self.searchQuery = searchQuery
     }
-
+    
     @StateObject private var locationManager = LocationManager()
     @State private var restaurants: [Restaurant] = []
     @State private var isLoading = false
     @State private var error: Error?
+    @State private var showError = false
     @State private var showingMap = false
     @State private var showingProfile = false
     @State private var showingPreferences = false
     @Environment(\.appTheme) private var theme
     
-    // Modern color scheme (matching CuisineSelectionView)
     private let colors = (
         background: Color.black,
-        primary: Color(red: 0.98, green: 0.24, blue: 0.25),     // DoorDash red
-        secondary: Color(red: 0.97, green: 0.97, blue: 0.97),   // Light gray
+        primary: Color(red: 0.98, green: 0.24, blue: 0.25),
+        secondary: Color(red: 0.97, green: 0.97, blue: 0.97),
         text: Color.white,
-        cardBackground: Color(white: 0.12)                       // Slightly lighter than black
+        cardBackground: Color(white: 0.12)
     )
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Group {
-                switch locationManager.state {
-                case .notDetermined, .unavailable:
-                    ContentUnavailableView {
-                        Label("Requesting Location Access", systemImage: locationManager.state.systemImage)
-                    } description: {
-                        Text(locationManager.state.description)
-                    }
-                    .foregroundColor(colors.text)
-                case .restricted, .denied:
-                    ContentUnavailableView {
-                        Label("Location Access Required", systemImage: locationManager.state.systemImage)
-                    } description: {
-                        Text(locationManager.state.description)
-                    } actions: {
-                        Button("Open Settings") {
-                            if let url = URL(string: UIApplication.openSettingsURLString) {
-                                UIApplication.shared.open(url)
+        ZStack {
+            colors.background
+                .ignoresSafeArea()
+            
+            if isLoading {
+                ProgressView()
+                    .tint(colors.primary)
+            } else if !restaurants.isEmpty {
+                ScrollView {
+                    LazyVStack(spacing: 20) {
+                        ForEach(restaurants) { restaurant in
+                            NavigationLink(destination: RestaurantDetailView(restaurant: restaurant)) {
+                                ModernRestaurantCard(restaurant: restaurant, colors: colors)
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(.bordered)
                     }
-                    .foregroundColor(colors.text)
-                case .authorized:
-                    if locationManager.location != nil {
-                        restaurantList
-                    } else {
-                        ProgressView("Getting your location...")
-                            .tint(colors.primary)
-                            .foregroundColor(colors.text)
-                    }
+                    .padding()
                 }
-            }
-            .background(colors.background)
-            
-            // Bottom Navigation Bar
-            HStack(spacing: 32) {
-                NavigationBarButton(
-                    title: "Home",
-                    icon: "house.fill",
-                    isActive: true,
-                    color: colors.primary
-                )
-                
-                NavigationBarButton(
-                    title: "Search",
-                    icon: "magnifyingglass",
-                    isActive: false,
-                    color: colors.primary
-                )
-                
-                NavigationBarButton(
-                    title: "Map",
-                    icon: "map",
-                    isActive: showingMap,
-                    color: colors.primary
-                ) {
-                    showingMap.toggle()
-                }
-                
-                NavigationBarButton(
-                    title: "Profile",
-                    icon: "person.fill",
-                    isActive: showingProfile,
-                    color: colors.primary
-                ) {
-                    showingProfile.toggle()
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(
-                Rectangle()
-                    .fill(colors.cardBackground)
-                    .shadow(color: .black.opacity(0.2), radius: 10, y: -5)
-            )
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                VStack {
-                    Text("Recommended")
-                        .font(.headline)
-                        .foregroundColor(colors.text)
-                    if locationManager.location != nil {
-                        Text("Near You")
-                            .font(.caption)
-                            .foregroundColor(colors.primary)
-                    }
-                }
-            }
-            
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
+            } else if let error = error {
+                ErrorView(error: error) {
                     Task {
                         await loadRestaurants(forceRefresh: true)
                     }
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .foregroundColor(colors.primary)
                 }
+            } else {
+                VStack(spacing: 16) {
+                    Image(systemName: "fork.knife.circle")
+                        .font(.system(size: 50))
+                        .foregroundColor(colors.primary)
+                    Text("No restaurants found")
+                        .font(.title2)
+                        .foregroundColor(colors.text)
+                    Text("Try adjusting your preferences or search criteria")
+                        .font(.subheadline)
+                        .foregroundColor(colors.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
             }
-            
-            ToolbarItem(placement: .topBarLeading) {
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    showingPreferences.toggle()
+                    showingMap = true
                 } label: {
-                    Image(systemName: "slider.horizontal.3")
-                        .foregroundColor(colors.primary)
+                    Image(systemName: "map")
+                        .foregroundColor(colors.text)
                 }
             }
-        }
-        .sheet(isPresented: $showingProfile) {
-            ProfileView()
-        }
-        .sheet(isPresented: $showingPreferences) {
-            PreferencesView(preferences: .constant(preferences))
-        }
-    }
-    
-    private var restaurantList: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Restaurant Cards
-                LazyVStack(spacing: 24) {
-                    ForEach(restaurants) { restaurant in
-                        ModernRestaurantCard(restaurant: restaurant, colors: colors)
-                            .padding(.horizontal)
-                    }
-                }
-                .padding(.vertical)
-            }
-        }
-        .refreshable {
-            await loadRestaurants(forceRefresh: true)
         }
         .sheet(isPresented: $showingMap) {
             if let location = locationManager.location {
-                NavigationStack {
-                    RestaurantMapView(
-                        restaurants: restaurants,
-                        centerCoordinate: location.coordinate
-                    )
-                    .navigationTitle("Nearby Restaurants")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button("Done") {
-                                showingMap = false
-                            }
-                        }
-                    }
-                }
+                RestaurantMapView(
+                    restaurants: restaurants,
+                    centerCoordinate: location.coordinate
+                )
                 .presentationDragIndicator(.visible)
             }
+        }
+        .alert("Error", isPresented: $showError, presenting: error) { _ in
+            Button("OK") { }
+            Button("Retry") {
+                Task {
+                    await loadRestaurants(forceRefresh: true)
+                }
+            }
+        } message: { error in
+            Text(error.localizedDescription)
         }
         .task {
             await loadRestaurants()
@@ -194,20 +107,35 @@ struct RestaurantListView: View {
     
     private func loadRestaurants(forceRefresh: Bool = false) async {
         guard !isLoading else { return }
-        guard let location = locationManager.location else { return }
+        guard let location = locationManager.location else {
+            error = NetworkError.apiError("Location services are not available")
+            showError = true
+            return
+        }
         
         isLoading = true
-        defer { isLoading = false }
+        error = nil
         
         do {
             restaurants = try await YelpAPIService.shared.searchRestaurants(
                 near: location,
-                preferences: preferences
+                preferences: preferences,
+                searchQuery: searchQuery
             )
+            if restaurants.isEmpty {
+                error = NetworkError.apiError("No restaurants found matching your criteria")
+            }
+        } catch let networkError as NetworkError {
+            error = networkError
+            showError = true
+            restaurants = []
         } catch {
-            self.error = error
+            self.error = NetworkError.apiError(error.localizedDescription)
+            showError = true
             restaurants = []
         }
+        
+        isLoading = false
     }
 }
 
