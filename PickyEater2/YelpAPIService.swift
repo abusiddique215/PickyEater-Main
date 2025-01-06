@@ -10,7 +10,7 @@ class YelpAPIService {
     private let session: URLSession
     private let decoder = JSONDecoder()
     private let apiKey: String
-    private let networkMonitor: NetworkMonitor
+    private let networkMonitor: AppNetworkMonitor
     
     private init() {
         self.apiKey = ProcessInfo.processInfo.environment["YELP_API_KEY"] ?? ""
@@ -21,8 +21,8 @@ class YelpAPIService {
         config.timeoutIntervalForResource = 300
         self.session = URLSession(configuration: config)
         
-        // Initialize NetworkMonitor with explicit initialization
-        self.networkMonitor = NetworkMonitor()
+        // Initialize AppNetworkMonitor with explicit initialization
+        self.networkMonitor = AppNetworkMonitor()
     }
     
     var isConnected: Bool {
