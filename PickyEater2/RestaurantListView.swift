@@ -3,6 +3,14 @@ import CoreLocation
 
 struct RestaurantListView: View {
     let preferences: UserPreferences
+    let searchQuery: String
+
+    // Explicit initializer with default value for searchQuery
+    init(preferences: UserPreferences, searchQuery: String = "") {
+        self.preferences = preferences
+        self.searchQuery = searchQuery
+    }
+
     @StateObject private var locationManager = LocationManager()
     @State private var restaurants: [Restaurant] = []
     @State private var isLoading = false

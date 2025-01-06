@@ -1,10 +1,12 @@
 import SwiftUI
 import SwiftData
+import LocalAuthentication
 
 struct PreferencesView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var preferences: UserPreferences
     @State private var selectedRestrictions: Set<String> = []
+    @State private var isAuthenticated = false
     
     // Modern color scheme (matching our other views)
     private let colors = (
@@ -25,6 +27,16 @@ struct PreferencesView: View {
     ]
     
     var body: some View {
+        Group {
+            if isAuthenticated {
+                preferencesContent
+            } else {
+                AuthenticationView(isAuthenticated: $isAuthenticated)
+            }
+        }
+    }
+    
+    private var preferencesContent: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {

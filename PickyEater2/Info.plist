@@ -10,5 +10,7 @@
 	<string>PickyEater needs your location to find restaurants near you.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>PickyEater needs your location to find restaurants near you.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>PickyEater uses Face ID to securely access your food preferences.</string>
 </dict>
 </plist>

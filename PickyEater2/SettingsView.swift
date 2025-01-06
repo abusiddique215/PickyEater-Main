@@ -74,15 +74,16 @@ struct SettingsView: View {
                 
                 Section {
                     Button(role: .destructive) {
-                        // Reset preferences
-                        let new = UserPreferences()
-                        modelContext.insert(new)
+                        // Reset preferences to default values
                         if let existing = preferences.first {
-                            modelContext.delete(existing)
+                            existing.maxDistance = 5
+                            existing.priceRange = 2
+                            existing.dietaryRestrictions = []
+                            existing.cuisinePreferences = []
+                            existing.theme = .system
+                            try? modelContext.save()
+                            selectedTheme = existing.theme
                         }
-                        try? modelContext.save()
-                        currentPreferences = new
-                        selectedTheme = new.theme
                     } label: {
                         Text("Reset All Settings")
                     }

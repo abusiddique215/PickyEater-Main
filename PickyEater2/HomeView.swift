@@ -81,8 +81,8 @@ struct CategoryCircle: View {
                     .shadow(color: .black.opacity(0.2), radius: 2)
                 
                 if category.type == "store" {
-                    // For store logos, use custom images
-                    Image(category.iconName)
+                    // Replace Image(category.iconName) with a placeholder SF Symbol if image not available
+                    Image(systemName: "building.2.crop.circle")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40)
@@ -112,6 +112,7 @@ struct HomeView: View {
     @State private var searchText = ""
     @State private var featuredRestaurants: [Restaurant] = []
     @State private var isLoading = false
+    @State private var storesNearYou: [Restaurant] = []
     
     // Modern color scheme (matching our theme)
     private let colors = (
@@ -173,11 +174,56 @@ struct HomeView: View {
                 .padding(.horizontal)
                 
                 // Stores Near You Section
-                CategoryScrollSection(
-                    title: "Stores near you",
-                    categories: StoreCategory.stores,
-                    colors: colors
-                )
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Stores near you")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(colors.text)
+                        .padding(.horizontal)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 15) {
+                            ForEach(storesNearYou) { store in
+                                VStack(spacing: 8) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color(white: 0.15))
+                                            .frame(width: 65, height: 65)
+                                            .shadow(color: .black.opacity(0.2), radius: 2)
+
+                                        AsyncImage(url: URL(string: store.imageUrl)) { phase in
+                                            switch phase {
+                                            case .empty:
+                                                ProgressView()
+                                                    .tint(colors.primary)
+                                            case .success(let image):
+                                                image
+                                                    .resizable()
+                                                    .scaledToFit()
+                                                    .frame(width: 40, height: 40)
+                                                    .clipShape(Circle())
+                                            case .failure(_):
+                                                Image(systemName: "photo")
+                                                    .font(.largeTitle)
+                                                    .foregroundColor(colors.secondary)
+                                            @unknown default:
+                                                EmptyView()
+                                            }
+                                        }
+                                    }
+                                    Text(store.name)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(colors.text)
+                                        .lineLimit(1)
+                                }
+                                .frame(width: 75)
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 5)
+                    }
+                }
+                .padding(.top, 5)
                 
                 // Food Categories Section
                 CategoryScrollSection(
@@ -258,6 +304,7 @@ struct HomeView: View {
         .background(colors.background.ignoresSafeArea())
         .task {
             await loadFeaturedRestaurants()
+            await loadStoresNearYou()
         }
     }
     
@@ -276,6 +323,19 @@ struct HomeView: View {
         } catch {
             print("Error loading restaurants: \(error)")
             featuredRestaurants = []
+        }
+    }
+    
+    private func loadStoresNearYou() async {
+        guard let location = locationManager.location else { return }
+        do {
+            self.storesNearYou = try await YelpAPIService.shared.searchRestaurants(
+                near: location,
+                preferences: preferences
+            )
+        } catch {
+            print("Error loading 'stores near you': \(error)")
+            self.storesNearYou = []
         }
     }
 }

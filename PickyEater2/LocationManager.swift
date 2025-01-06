@@ -1,7 +1,6 @@
 import CoreLocation
 import SwiftUI
 
-@MainActor
 class LocationManager: NSObject, ObservableObject {
     private let manager = CLLocationManager()
     @Published var location: CLLocation?
@@ -60,19 +59,25 @@ class LocationManager: NSObject, ObservableObject {
 }
 
 extension LocationManager: CLLocationManagerDelegate {
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        checkAuthorizationStatus()
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor in
+            self.checkAuthorizationStatus()
+        }
     }
     
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
-        self.location = location
-        updateAddress(from: location)
+        Task { @MainActor in
+            self.location = location
+            self.updateAddress(from: location)
+        }
     }
     
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
-        state = .unavailable
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in
+            print("Location error: \(error.localizedDescription)")
+            self.state = .unavailable
+        }
     }
 }
 

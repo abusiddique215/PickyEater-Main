@@ -28,7 +28,7 @@ struct MainTabView: View {
             .tag(0)
             
             NavigationStack {
-                RestaurantListView(preferences: currentPreferences)
+                SearchView()
             }
             .tabItem {
                 Label("Search", systemImage: "magnifyingglass")

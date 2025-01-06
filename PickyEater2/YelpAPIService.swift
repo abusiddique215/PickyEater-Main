@@ -30,176 +30,45 @@ class YelpAPIService {
     
     func searchRestaurants(
         near location: CLLocation,
-        preferences: UserPreferences
+        preferences: UserPreferences,
+        searchQuery: String = "",
+        offset: Int = 0
     ) async throws -> [Restaurant] {
-        // Verify location is valid
-        guard CLLocationCoordinate2D(
-            latitude: location.coordinate.latitude,
-            longitude: location.coordinate.longitude
-        ).isValid else {
-            print("❌ Invalid coordinates: \(location.coordinate)")
-            throw YelpAPIError.invalidLocation
-        }
-        
-        print("📍 Starting restaurant search:")
-        print("- Location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
-        print("- Max Distance: \(preferences.maxDistance)km")
-        print("- Price Range: \(preferences.priceRange)")
-        print("- Dietary Restrictions: \(preferences.dietaryRestrictions)")
-        print("- Cuisine Preferences: \(preferences.cuisinePreferences)")
-        
-        // Verify API key
-        guard !apiKey.isEmpty else {
-            print("❌ No Yelp API key found - falling back to Apple Maps")
-            return try await searchWithAppleMaps(near: location)
-        }
-        
-        // Build URL with explicit integer radius
-        let radiusInMeters: Int = min(preferences.maxDistance * 1000, 40000) // Max 40km per Yelp API
-        let latitude = String(format: "%.6f", location.coordinate.latitude)
-        let longitude = String(format: "%.6f", location.coordinate.longitude)
-        
-        // Create search terms based on dietary restrictions
-        var searchTerms = ["restaurants"]
-        var attributes: [String] = []
-        var categories: [String] = []
-        
-        // Handle dietary restrictions
-        for restriction in preferences.dietaryRestrictions {
-            switch restriction.lowercased() {
-            case "vegetarian":
-                categories.append("vegetarian")
-                attributes.append("vegetarian")
-            case "vegan":
-                categories.append("vegan")
-                attributes.append("vegan")
-            case "gluten-free":
-                categories.append("gluten_free")
-                attributes.append("gluten_free")
-            case "halal":
-                categories.append("halal")
-            case "kosher":
-                categories.append("kosher")
-            case "dairy-free":
-                searchTerms.append("dairy-free")
-            default:
-                break
-            }
-        }
-        
-        // Add cuisine preferences to categories
-        if !preferences.cuisinePreferences.isEmpty {
-            categories.append(contentsOf: preferences.cuisinePreferences)
-        }
-        
-        // Construct URL components manually to ensure proper encoding
         var components = URLComponents(string: "\(baseURL)/businesses/search")!
-        components.queryItems = [
-            URLQueryItem(name: "latitude", value: latitude),
-            URLQueryItem(name: "longitude", value: longitude),
-            URLQueryItem(name: "radius", value: String(radiusInMeters)),
-            URLQueryItem(name: "term", value: searchTerms.joined(separator: " ")),
-            URLQueryItem(name: "limit", value: "50"), // Increased from 20 to 50
-            URLQueryItem(name: "sort_by", value: "distance"),
-            URLQueryItem(name: "price", value: String(preferences.priceRange))
+        
+        // Convert price range to Yelp format (1,2,3,4)
+        let priceFilter = String(preferences.priceRange)
+        
+        // Parameters
+        var queryItems = [
+            URLQueryItem(name: "latitude", value: String(location.coordinate.latitude)),
+            URLQueryItem(name: "longitude", value: String(location.coordinate.longitude)),
+            URLQueryItem(name: "limit", value: "50"), // Adjust as needed
+            URLQueryItem(name: "offset", value: String(offset)),
+            URLQueryItem(name: "price", value: priceFilter)
         ]
         
-        // Add attributes if any
-        if !attributes.isEmpty {
-            components.queryItems?.append(
-                URLQueryItem(name: "attributes", value: attributes.joined(separator: ","))
-            )
+        if !searchQuery.trimmingCharacters(in: .whitespaces).isEmpty {
+            queryItems.append(URLQueryItem(name: "term", value: searchQuery))
         }
         
-        // Add categories if any
-        if !categories.isEmpty {
-            components.queryItems?.append(
-                URLQueryItem(name: "categories", value: categories.joined(separator: ","))
-            )
-        }
+        components.queryItems = queryItems
         
-        guard let url = components.url else {
-            print("❌ Failed to construct URL")
+        var request = URLRequest(url: components.url!)
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              200..<300 ~= httpResponse.statusCode else {
             throw YelpAPIError.invalidResponse
         }
         
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        // Decode the response
+        let yelpResponse = try decoder.decode(RestaurantSearchResponse.self, from: data)
         
-        print("🔍 API Request Details:")
-        print("- URL: \(url)")
-        print("- Search Terms: \(searchTerms)")
-        print("- Categories: \(categories)")
-        print("- Attributes: \(attributes)")
-        
-        do {
-            let (data, response) = try await session.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("❌ Invalid response type")
-                throw YelpAPIError.invalidResponse
-            }
-            
-            print("📡 Response Status: \(httpResponse.statusCode)")
-            
-            switch httpResponse.statusCode {
-            case 200:
-                let searchResponse = try decoder.decode(RestaurantSearchResponse.self, from: data)
-                print("✅ Found \(searchResponse.businesses.count) restaurants")
-                
-                // Additional filtering for dietary restrictions that can't be handled by the API
-                let filteredRestaurants = searchResponse.businesses.filter { restaurant in
-                    // If no dietary restrictions, include all restaurants
-                    guard !preferences.dietaryRestrictions.isEmpty else { return true }
-                    
-                    // Check if restaurant categories or title contain any of our dietary keywords
-                    let restaurantKeywords = restaurant.categories.map { $0.title.lowercased() }
-                        .joined(separator: " ")
-                        .split(separator: " ")
-                        .map(String.init)
-                    
-                    // Check if any of the restaurant's categories match our dietary restrictions
-                    let matchesDietary = preferences.dietaryRestrictions.contains { restriction in
-                        let restrictionKeywords = restriction.lowercased().split(separator: "-").map(String.init)
-                        return restrictionKeywords.allSatisfy { keyword in
-                            restaurantKeywords.contains { $0.contains(keyword) }
-                        }
-                    }
-                    
-                    return matchesDietary
-                }
-                
-                if filteredRestaurants.isEmpty {
-                    print("⚠️ No restaurants found with specified dietary restrictions")
-                    // Instead of falling back to Apple Maps, return the unfiltered results
-                    return searchResponse.businesses
-                }
-                
-                return filteredRestaurants
-                
-            case 400:
-                print("❌ Bad request - Check parameters")
-                if let errorString = String(data: data, encoding: .utf8) {
-                    print("Error details: \(errorString)")
-                }
-                return try await searchWithAppleMaps(near: location)
-                
-            case 429:
-                print("❌ Rate limit exceeded - Retrying after delay")
-                try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-                return try await searchRestaurants(near: location, preferences: preferences)
-                
-            default:
-                print("❌ Unexpected status code: \(httpResponse.statusCode)")
-                return try await searchWithAppleMaps(near: location)
-            }
-            
-        } catch {
-            print("❌ Search failed: \(error.localizedDescription)")
-            print("⚠️ Falling back to Apple Maps...")
-            return try await searchWithAppleMaps(near: location)
-        }
+        // Process and return restaurants
+        return yelpResponse.businesses
     }
     
     private func searchWithAppleMaps(near location: CLLocation, radius: Int = 1000) async throws -> [Restaurant] {
