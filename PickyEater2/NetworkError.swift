@@ -1,6 +1,6 @@
 import Foundation
 
-enum NetworkError: LocalizedError {
+enum NetworkError: Error {
     case invalidURL
     case noData
     case decodingError
@@ -8,14 +8,14 @@ enum NetworkError: LocalizedError {
     case noInternet
     case apiError(String)
     
-    var errorDescription: String? {
+    var localizedDescription: String {
         switch self {
         case .invalidURL:
             return "Invalid URL"
         case .noData:
             return "No data received"
         case .decodingError:
-            return "Error decoding data"
+            return "Failed to decode response"
         case .serverError(let code):
             return "Server error: \(code)"
         case .noInternet:

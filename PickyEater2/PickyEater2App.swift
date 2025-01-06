@@ -13,11 +13,13 @@ struct PickyEater2App: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var notificationManager = NotificationManager.shared
     @StateObject private var themeManager = ThemeManager.shared
+    @StateObject private var preferencesManager = PreferencesManager.shared
     
     var body: some Scene {
         WindowGroup {
             NavigationStack {
                 CuisineSelectionView()
+                    .environmentObject(preferencesManager)
             }
             .modelContainer(for: UserPreferences.self)
             .preferredColorScheme(themeManager.colorScheme)
