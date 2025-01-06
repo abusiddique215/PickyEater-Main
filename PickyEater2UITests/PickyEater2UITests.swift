@@ -8,36 +8,74 @@
 import XCTest
 
 final class PickyEater2UITests: XCTestCase {
-
+    var app: XCUIApplication!
+    
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
-    @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
-        let app = XCUIApplication()
+        app = XCUIApplication()
         app.launch()
-
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
     }
-
-    @MainActor
-    func testLaunchPerformance() throws {
-        if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
-            // This measures how long it takes to launch your application.
-            measure(metrics: [XCTApplicationLaunchMetric()]) {
-                XCUIApplication().launch()
-            }
-        }
+    
+    func testBasicAppNavigation() throws {
+        // Test tab bar navigation
+        XCTAssertTrue(app.tabBars.buttons["Home"].exists)
+        XCTAssertTrue(app.tabBars.buttons["Search"].exists)
+        XCTAssertTrue(app.tabBars.buttons["Map"].exists)
+        XCTAssertTrue(app.tabBars.buttons["Profile"].exists)
+        
+        // Navigate to Profile
+        app.tabBars.buttons["Profile"].tap()
+        XCTAssertTrue(app.navigationBars["Profile"].exists)
+        
+        // Check for Sign in with Apple button
+        let signInButton = app.buttons.matching(identifier: "Sign in with Apple").firstMatch
+        XCTAssertTrue(signInButton.exists)
+    }
+    
+    func testSearchFlow() throws {
+        // Navigate to Search
+        app.tabBars.buttons["Search"].tap()
+        
+        // Check search field exists
+        let searchField = app.searchFields.firstMatch
+        XCTAssertTrue(searchField.exists)
+        
+        // Test search interaction
+        searchField.tap()
+        searchField.typeText("Pizza")
+        app.keyboards.buttons["Search"].tap()
+        
+        // Wait for results
+        let predicate = NSPredicate(format: "exists == true")
+        let expectation = expectation(for: predicate, evaluatedWith: app.cells.firstMatch, handler: nil)
+        wait(for: [expectation], timeout: 5.0)
+    }
+    
+    func testCuisineSelection() throws {
+        // Navigate to Profile
+        app.tabBars.buttons["Profile"].tap()
+        
+        // Tap Favorite Cuisines
+        app.buttons["Favorite Cuisines"].tap()
+        
+        // Check if cuisine options exist
+        XCTAssertTrue(app.buttons["Italian"].exists)
+        XCTAssertTrue(app.buttons["Chinese"].exists)
+        
+        // Select a cuisine
+        app.buttons["Italian"].tap()
+        
+        // Check if Next button is enabled
+        XCTAssertTrue(app.buttons["NEXT"].isEnabled)
+    }
+    
+    func testDarkModeToggle() throws {
+        // Navigate to Profile
+        app.tabBars.buttons["Profile"].tap()
+        
+        // Find and toggle dark mode switch
+        let darkModeSwitch = app.switches.firstMatch
+        XCTAssertTrue(darkModeSwitch.exists)
+        darkModeSwitch.tap()
     }
 }

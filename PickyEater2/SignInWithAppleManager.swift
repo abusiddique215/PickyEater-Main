@@ -44,7 +44,14 @@ class SignInWithAppleManager: NSObject, ObservableObject {
         
         let controller = ASAuthorizationController(authorizationRequests: [request])
         controller.delegate = self
-        controller.presentationContextProvider = UIApplication.shared.windows.first?.rootViewController as? ASAuthorizationControllerPresentationContextProviding
+        
+        // Get the window scene
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first,
+           let rootViewController = window.rootViewController {
+            controller.presentationContextProvider = rootViewController as? ASAuthorizationControllerPresentationContextProviding
+        }
+        
         controller.performRequests()
     }
     
