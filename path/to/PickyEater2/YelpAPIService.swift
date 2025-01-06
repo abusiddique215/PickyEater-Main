@@ -25,5 +25,9 @@ class YelpAPIService {
         self.networkMonitor = AppNetworkMonitor()
     }
     
+    var isConnected: Bool {
+        networkMonitor.isConnected
+    }
+    
     // ... rest of the code remains unchanged
 } 
