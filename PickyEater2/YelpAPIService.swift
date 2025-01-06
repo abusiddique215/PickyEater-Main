@@ -10,7 +10,7 @@ class YelpAPIService {
     private let session: URLSession
     private let decoder = JSONDecoder()
     private let apiKey: String
-    private let networkMonitor = NetworkMonitor()
+    private let networkMonitor: NetworkMonitor
     
     private init() {
         self.apiKey = ProcessInfo.processInfo.environment["YELP_API_KEY"] ?? ""
@@ -20,6 +20,13 @@ class YelpAPIService {
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 300
         self.session = URLSession(configuration: config)
+        
+        // Initialize NetworkMonitor with explicit initialization
+        self.networkMonitor = NetworkMonitor()
+    }
+    
+    var isConnected: Bool {
+        networkMonitor.isConnected
     }
     
     func searchRestaurants(
@@ -29,7 +36,7 @@ class YelpAPIService {
         offset: Int = 0
     ) async throws -> [Restaurant] {
         // Check network connectivity
-        guard networkMonitor.isConnected else {
+        guard isConnected else {
             throw NetworkError.noInternet
         }
         
