@@ -22,4 +22,4 @@ enum NetworkError: Error {
             return message
         }
     }
-} 
+}
