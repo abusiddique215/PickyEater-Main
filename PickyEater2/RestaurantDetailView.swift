@@ -2,6 +2,9 @@ import SwiftUI
 
 struct RestaurantDetailView: View {
     let restaurant: Restaurant
+    @StateObject private var notificationManager = NotificationManager.shared
+    @State private var showingReminderOptions = false
+    @State private var showingNotificationError = false
     
     private let colors = (
         background: Color.black,
@@ -37,10 +40,11 @@ struct RestaurantDetailView: View {
                                     .foregroundColor(colors.secondary)
                             }
                     @unknown default:
-                        EmptyView()
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
                     }
                 }
-                .frame(height: 250)
+                .frame(height: 200)
                 .clipped()
                 
                 VStack(alignment: .leading, spacing: 16) {
@@ -49,60 +53,162 @@ struct RestaurantDetailView: View {
                         Text(restaurant.name)
                             .font(.title2)
                             .fontWeight(.bold)
+                            .foregroundColor(colors.text)
                         
                         Spacer()
                         
-                        if restaurant.rating > 0 {
-                            HStack(spacing: 4) {
-                                Image(systemName: "star.fill")
-                                    .foregroundColor(.yellow)
-                                Text(String(format: "%.1f", restaurant.rating))
+                        Button {
+                            showingReminderOptions = true
+                        } label: {
+                            Image(systemName: "bell")
+                                .font(.title2)
+                                .foregroundColor(colors.primary)
+                        }
+                    }
+                    
+                    // Rating and Reviews
+                    HStack {
+                        ForEach(0..<Int(restaurant.rating), id: \.self) { _ in
+                            Image(systemName: "star.fill")
+                                .foregroundColor(.yellow)
+                        }
+                        Text("(\(restaurant.reviewCount) reviews)")
+                            .foregroundColor(colors.secondary)
+                    }
+                    
+                    // Categories
+                    if !restaurant.categories.isEmpty {
+                        HStack {
+                            ForEach(restaurant.categories, id: \.alias) { category in
+                                Text(category.title)
+                                    .font(.caption)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(colors.cardBackground)
+                                    .foregroundColor(colors.text)
+                                    .cornerRadius(15)
                             }
                         }
                     }
                     
-                    // Categories and Price
+                    // Price and Distance
                     HStack {
-                        Text(restaurant.categories.map { $0.title }.joined(separator: " • "))
-                            .font(.subheadline)
-                            .foregroundColor(colors.secondary)
-                        
                         if let price = restaurant.price {
-                            Text("•")
-                                .foregroundColor(colors.secondary)
                             Text(price)
                                 .foregroundColor(.green)
+                        }
+                        if let distance = restaurant.distance {
+                            Text("•")
+                                .foregroundColor(colors.secondary)
+                            Text(String(format: "%.1f km", distance / 1000))
+                                .foregroundColor(colors.secondary)
                         }
                     }
                     
                     // Address
-                    HStack {
-                        Image(systemName: "location.fill")
-                            .foregroundColor(colors.primary)
-                        Text(restaurant.location.address1)
+                    VStack(alignment: .leading) {
+                        Text("Location")
+                            .font(.headline)
+                            .foregroundColor(colors.text)
+                        Text("\(restaurant.location.address1)")
+                            .foregroundColor(colors.secondary)
+                        Text("\(restaurant.location.city), \(restaurant.location.state)")
+                            .foregroundColor(colors.secondary)
                     }
-                    .font(.subheadline)
                     
-                    // Phone
-                    if !restaurant.displayPhone.isEmpty {
-                        Button {
-                            if let url = URL(string: "tel:\(restaurant.phone)") {
-                                UIApplication.shared.open(url)
-                            }
-                        } label: {
-                            HStack {
-                                Image(systemName: "phone.fill")
-                                    .foregroundColor(colors.primary)
-                                Text(restaurant.displayPhone)
-                            }
+                    // Action Buttons
+                    HStack {
+                        ActionButton(
+                            title: "Get Directions",
+                            icon: "location.fill",
+                            action: openInMaps
+                        )
+                        
+                        if !restaurant.phone.isEmpty {
+                            ActionButton(
+                                title: "Call",
+                                icon: "phone.fill",
+                                action: callRestaurant
+                            )
                         }
-                        .font(.subheadline)
                     }
                 }
                 .padding()
             }
         }
-        .background(colors.background)
+        .background(colors.background.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(
+            "Set Reminder",
+            isPresented: $showingReminderOptions,
+            titleVisibility: .visible
+        ) {
+            Button("Remind in 1 hour") {
+                scheduleReminder(hours: 1)
+            }
+            Button("Remind in 4 hours") {
+                scheduleReminder(hours: 4)
+            }
+            Button("Remind tomorrow") {
+                scheduleReminder(hours: 24)
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("Notification Error", isPresented: $showingNotificationError) {
+            Button("OK", role: .cancel) {}
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("Please enable notifications in settings to set reminders.")
+        }
+    }
+    
+    private func scheduleReminder(hours: Double) {
+        if notificationManager.hasPermission {
+            notificationManager.scheduleRestaurantReminder(
+                restaurant: restaurant,
+                timeInterval: hours * 3600
+            )
+        } else {
+            showingNotificationError = true
+        }
+    }
+    
+    private func openInMaps() {
+        let query = "\(restaurant.location.address1), \(restaurant.location.city)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let url = URL(string: "maps://?q=\(query)") {
+            UIApplication.shared.open(url)
+        }
+    }
+    
+    private func callRestaurant() {
+        if let url = URL(string: "tel:\(restaurant.phone)") {
+            UIApplication.shared.open(url)
+        }
+    }
+}
+
+struct ActionButton: View {
+    let title: String
+    let icon: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                Text(title)
+            }
+            .font(.subheadline)
+            .fontWeight(.semibold)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .background(Color(red: 0.98, green: 0.24, blue: 0.25))
+            .cornerRadius(12)
+        }
     }
 } 

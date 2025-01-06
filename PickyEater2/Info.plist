@@ -10,5 +10,11 @@
 		<string>fetch</string>
 		<string>bluetooth-central</string>
 	</array>
+	<key>NSUserNotificationAlertStyle</key>
+	<string>alert</string>
+	<key>NSUserNotificationDefaultSoundName</key>
+	<string>default</string>
+	<key>NSUserNotificationEnabled</key>
+	<true/>
 </dict>
 </plist>

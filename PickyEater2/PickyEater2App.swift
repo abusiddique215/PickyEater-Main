@@ -6,21 +6,25 @@
 //
 
 import SwiftUI
-import SwiftData
 
 @main
 struct PickyEater2App: App {
-    @StateObject private var themeManager = ThemeManager.shared
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var notificationManager = NotificationManager.shared
     
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                // 1) Start here with CuisineSelectionView
-                CuisineSelectionView(preferences: .constant(UserPreferences()))
-            }
-            .modelContainer(for: UserPreferences.self)
-            .preferredColorScheme(themeManager.colorScheme)
-            .environment(\.appTheme, themeManager.colorScheme)
+            CuisineSelectionView()
+                .onAppear {
+                    // Request notification permissions when app launches
+                    Task {
+                        do {
+                            try await notificationManager.requestPermission()
+                        } catch {
+                            print("Failed to request notification permission: \(error)")
+                        }
+                    }
+                }
         }
     }
 }
