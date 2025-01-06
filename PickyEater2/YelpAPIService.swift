@@ -3,6 +3,7 @@ import CoreLocation
 import MapKit
 import Network
 
+@MainActor
 class YelpAPIService {
     static let shared = YelpAPIService()
     private let baseURL = "https://api.yelp.com/v3"
@@ -37,15 +38,16 @@ class YelpAPIService {
             throw NetworkError.apiError("Invalid location coordinates")
         }
         
-        // Create URL components
-        guard let components = URLComponents(string: "\(baseURL)/businesses/search") else {
+        // Create URL components and query items
+        var urlComponents = URLComponents(string: "\(baseURL)/businesses/search")
+        guard urlComponents != nil else {
             throw NetworkError.invalidURL
         }
         
         // Convert price range to Yelp format (1,2,3,4)
         let priceFilter = String(preferences.priceRange)
         
-        // Parameters
+        // Build query items
         var queryItems = [
             URLQueryItem(name: "latitude", value: String(location.coordinate.latitude)),
             URLQueryItem(name: "longitude", value: String(location.coordinate.longitude)),
@@ -58,9 +60,10 @@ class YelpAPIService {
             queryItems.append(URLQueryItem(name: "term", value: searchQuery))
         }
         
-        components.queryItems = queryItems
+        // Set query items
+        urlComponents?.queryItems = queryItems
         
-        guard let url = components.url else {
+        guard let url = urlComponents?.url else {
             throw NetworkError.invalidURL
         }
         
