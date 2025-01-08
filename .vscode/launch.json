@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:PickyEater2}",
+            "name": "Debug PickyEater2",
+            "program": "${workspaceFolder:PickyEater2}/.build/debug/PickyEater2",
+            "preLaunchTask": "swift: Build Debug PickyEater2"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:PickyEater2}",
+            "name": "Release PickyEater2",
+            "program": "${workspaceFolder:PickyEater2}/.build/release/PickyEater2",
+            "preLaunchTask": "swift: Build Release PickyEater2"
+        }
+    ]
+}

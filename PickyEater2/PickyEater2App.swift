@@ -5,35 +5,30 @@
 //  Created by Abu Siddique on 12/29/24.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct PickyEater2App: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var notificationManager = NotificationManager.shared
-    @StateObject private var themeManager = ThemeManager.shared
+    @StateObject private var authService = AuthenticationService.shared
     @StateObject private var preferencesManager = PreferencesManager.shared
     
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                CuisineSelectionView()
-                    .environmentObject(preferencesManager)
-            }
-            .modelContainer(for: UserPreferences.self)
-            .preferredColorScheme(themeManager.colorScheme)
-            .environment(\.appTheme, themeManager.colorScheme)
-            .onAppear {
-                // Request notification permissions when app launches
-                Task {
-                    do {
-                        try await notificationManager.requestPermission()
-                    } catch {
-                        print("Failed to request notification permission: \(error)")
+            Group {
+                if authService.isAuthenticated {
+                    if preferencesManager.preferences.cuisinePreferences.isEmpty {
+                        CuisineSelectionView()
+                            .environmentObject(preferencesManager)
+                    } else {
+                        MainTabView()
+                            .environmentObject(preferencesManager)
                     }
+                } else {
+                    AuthenticationView()
                 }
             }
+            .environmentObject(authService)
         }
     }
 }
