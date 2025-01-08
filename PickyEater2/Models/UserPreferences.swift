@@ -1,57 +1,157 @@
-import SwiftData
-import SwiftUI
+import Foundation
 
-enum AppTheme: String, Codable {
-    case light, dark, system
-
-    var colorScheme: ColorScheme? {
+enum DietaryRestriction: String, CaseIterable, Codable {
+    case vegetarian
+    case vegan
+    case glutenFree = "gluten-free"
+    case dairyFree = "dairy-free"
+    
+    var description: String {
         switch self {
-        case .light: return .light
-        case .dark: return .dark
-        case .system: return nil
+        case .vegetarian: return "Vegetarian"
+        case .vegan: return "Vegan"
+        case .glutenFree: return "Gluten-Free"
+        case .dairyFree: return "Dairy-Free"
         }
     }
 }
 
-@Model
-final class UserPreferences {
-    var maxDistance: Int
-    var priceRange: Int
-    var dietaryRestrictionsData: Data
-    var cuisinePreferencesData: Data
-    var theme: AppTheme
-
-    var dietaryRestrictions: [String] {
-        get { decodeArray(from: dietaryRestrictionsData) }
-        set { dietaryRestrictionsData = encodeArray(newValue) }
+enum PriceRange: Int, CaseIterable, Codable {
+    case low = 1      // $
+    case medium = 2   // $$
+    case high = 3     // $$$
+    case veryHigh = 4 // $$$$
+    
+    var description: String {
+        String(repeating: "$", count: rawValue)
     }
+}
 
-    var cuisinePreferences: [String] {
-        get { decodeArray(from: cuisinePreferencesData) }
-        set { cuisinePreferencesData = encodeArray(newValue) }
+struct UserPreferences: Codable {
+    var dietaryRestrictions: Set<DietaryRestriction>
+    var cuisinePreferences: Set<String>
+    var priceRange: PriceRange?
+    var minimumRating: Double?
+    var maximumDistance: Double? // in meters
+    var sortBy: SortOption
+    
+    enum SortOption: String, CaseIterable, Codable {
+        case bestMatch = "best_match"
+        case rating = "rating"
+        case reviewCount = "review_count"
+        case distance = "distance"
     }
-
+    
     init(
-        maxDistance: Int = 5,
-        priceRange: Int = 2,
-        dietaryRestrictions: [String] = [],
-        cuisinePreferences: [String] = [],
-        theme: AppTheme = .system
+        dietaryRestrictions: Set<DietaryRestriction> = [],
+        cuisinePreferences: Set<String> = [],
+        priceRange: PriceRange? = nil,
+        minimumRating: Double? = nil,
+        maximumDistance: Double? = nil,
+        sortBy: SortOption = .bestMatch
     ) {
-        self.maxDistance = maxDistance
-        self.priceRange = priceRange
-        self.theme = theme
-        dietaryRestrictionsData = Data()
-        cuisinePreferencesData = Data()
         self.dietaryRestrictions = dietaryRestrictions
         self.cuisinePreferences = cuisinePreferences
+        self.priceRange = priceRange
+        self.minimumRating = minimumRating
+        self.maximumDistance = maximumDistance
+        self.sortBy = sortBy
     }
+}
 
-    private func encodeArray(_ array: [String]) -> Data {
-        (try? JSONEncoder().encode(array)) ?? Data()
+// MARK: - UserDefaults Extension
+extension UserDefaults {
+    private static let preferencesKey = "user_preferences"
+    
+    var userPreferences: UserPreferences {
+        get {
+            guard let data = data(forKey: UserDefaults.preferencesKey),
+                  let preferences = try? JSONDecoder().decode(UserPreferences.self, from: data) else {
+                return UserPreferences()
+            }
+            return preferences
+        }
+        set {
+            guard let data = try? JSONEncoder().encode(newValue) else { return }
+            set(data, forKey: UserDefaults.preferencesKey)
+        }
     }
+}
 
-    private func decodeArray(from data: Data) -> [String] {
-        (try? JSONDecoder().decode([String].self, from: data)) ?? []
+// MARK: - Notification Support
+extension UserPreferences {
+    static let preferencesChangedNotification = Notification.Name("UserPreferencesChanged")
+    
+    func save() {
+        UserDefaults.standard.userPreferences = self
+        NotificationCenter.default.post(name: Self.preferencesChangedNotification, object: nil)
+    }
+}
+
+// MARK: - Preference Management
+extension UserPreferences {
+    mutating func toggleDietaryRestriction(_ restriction: DietaryRestriction) {
+        if dietaryRestrictions.contains(restriction) {
+            dietaryRestrictions.remove(restriction)
+        } else {
+            dietaryRestrictions.insert(restriction)
+        }
+    }
+    
+    mutating func toggleCuisinePreference(_ cuisine: String) {
+        if cuisinePreferences.contains(cuisine) {
+            cuisinePreferences.remove(cuisine)
+        } else {
+            cuisinePreferences.insert(cuisine)
+        }
+    }
+    
+    mutating func clearAllPreferences() {
+        dietaryRestrictions.removeAll()
+        cuisinePreferences.removeAll()
+        priceRange = nil
+        minimumRating = nil
+        maximumDistance = nil
+        sortBy = .bestMatch
+    }
+    
+    func matches(_ restaurant: Restaurant) -> Bool {
+        // Price range check
+        if let preferredPrice = priceRange,
+           restaurant.priceRange.rawValue > preferredPrice.rawValue {
+            return false
+        }
+        
+        // Rating check
+        if let minRating = minimumRating,
+           restaurant.rating < minRating {
+            return false
+        }
+        
+        // Distance check
+        if let maxDistance = maximumDistance,
+           restaurant.distance > maxDistance {
+            return false
+        }
+        
+        // Dietary restrictions check
+        if !dietaryRestrictions.isEmpty {
+            let restaurantCategories = Set(restaurant.categories.map { $0.lowercased() })
+            let requiredCategories = Set(dietaryRestrictions.map { $0.rawValue })
+            if !requiredCategories.isSubset(of: restaurantCategories) {
+                return false
+            }
+        }
+        
+        // Cuisine preferences check
+        if !cuisinePreferences.isEmpty {
+            let restaurantCuisines = Set(restaurant.categories.map { $0.lowercased() })
+            let preferredCuisines = Set(cuisinePreferences.map { $0.lowercased() })
+            if restaurantCuisines.isDisjoint(with: preferredCuisines) {
+                return false
+            }
+        }
+        
+        return true
     }
 }
