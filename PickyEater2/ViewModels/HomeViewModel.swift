@@ -1,116 +1,102 @@
-import SwiftUI
+import Foundation
+import CoreLocation
 import Combine
 
 @MainActor
 class HomeViewModel: ObservableObject {
-    @Published var featuredRestaurants: [Restaurant] = []
-    @Published var nearbyRestaurants: [Restaurant] = []
-    @Published var searchText = ""
-    @Published var selectedCuisines: Set<String> = []
-    @Published var selectedPriceLevels: Set<String> = []
-    @Published var minimumRating: Double = 0
-    @Published var isLoading = false
-    @Published var error: Error?
+    @Published private(set) var restaurants: [Restaurant] = []
+    @Published private(set) var isLoading = false
+    @Published private(set) var error: Error?
+    @Published var selectedRestaurant: Restaurant?
     
-    private let restaurantService: RestaurantService
+    private let yelpService: YelpAPIService
+    private let locationManager: LocationManager
+    private let filterService: RestaurantFilterService
     private var cancellables = Set<AnyCancellable>()
     
-    init(restaurantService: RestaurantService = RestaurantService()) {
-        self.restaurantService = restaurantService
-        setupSearchPublisher()
-        setupFilterPublishers()
-        Task {
-            await loadRestaurants()
-        }
+    init(
+        yelpService: YelpAPIService,
+        locationManager: LocationManager,
+        filterService: RestaurantFilterService
+    ) {
+        self.yelpService = yelpService
+        self.locationManager = locationManager
+        self.filterService = filterService
+        
+        setupLocationUpdates()
+        setupPreferencesUpdates()
     }
     
-    var filteredRestaurants: [Restaurant] {
-        var restaurants = nearbyRestaurants
-        
-        // Apply search filter
-        if !searchText.isEmpty {
-            restaurants = restaurants.filter { restaurant in
-                restaurant.name.localizedCaseInsensitiveContains(searchText) ||
-                restaurant.cuisineType.localizedCaseInsensitiveContains(searchText)
+    private func setupLocationUpdates() {
+        locationManager.$location
+            .compactMap { $0 }
+            .removeDuplicates()
+            .sink { [weak self] _ in
+                Task {
+                    await self?.fetchRestaurants()
+                }
             }
-        }
-        
-        // Apply cuisine filter
-        if !selectedCuisines.isEmpty {
-            restaurants = restaurants.filter { restaurant in
-                selectedCuisines.contains(restaurant.cuisineType)
-            }
-        }
-        
-        // Apply price level filter
-        if !selectedPriceLevels.isEmpty {
-            restaurants = restaurants.filter { restaurant in
-                selectedPriceLevels.contains(restaurant.priceLevel)
-            }
-        }
-        
-        // Apply rating filter
-        if minimumRating > 0 {
-            restaurants = restaurants.filter { restaurant in
-                restaurant.rating >= minimumRating
-            }
-        }
-        
-        return restaurants
+            .store(in: &cancellables)
     }
     
-    func loadRestaurants() async {
-        guard !isLoading else { return }
+    private func setupPreferencesUpdates() {
+        NotificationCenter.default.publisher(for: UserPreferences.preferencesChangedNotification)
+            .sink { [weak self] _ in
+                Task {
+                    await self?.fetchRestaurants()
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    func fetchRestaurants() async {
+        guard let location = locationManager.location else {
+            error = LocationError.locationNotAvailable
+            return
+        }
         
         isLoading = true
         error = nil
         
         do {
-            async let featured = restaurantService.fetchFeaturedRestaurants()
-            async let nearby = restaurantService.fetchNearbyRestaurants()
+            let preferences = UserDefaults.standard.userPreferences
+            let fetchedRestaurants = try await yelpService.searchRestaurants(
+                location: location,
+                categories: Array(preferences.cuisinePreferences),
+                price: preferences.priceRange,
+                radius: Int(preferences.maximumDistance ?? 5000)
+            )
             
-            let (featuredResult, nearbyResult) = await (try featured, try nearby)
-            
-            self.featuredRestaurants = featuredResult
-            self.nearbyRestaurants = nearbyResult
+            // Filter and sort restaurants based on user preferences
+            let filteredRestaurants = filterService.filterRestaurants(fetchedRestaurants, preferences: preferences)
+            restaurants = filterService.sortRestaurantsByPreference(filteredRestaurants, preferences: preferences)
         } catch {
             self.error = error
+            restaurants = []
         }
         
         isLoading = false
     }
     
     func refreshRestaurants() async {
-        await loadRestaurants()
+        await fetchRestaurants()
     }
     
-    private func setupSearchPublisher() {
-        $searchText
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .removeDuplicates()
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-            }
-            .store(in: &cancellables)
-    }
-    
-    private func setupFilterPublishers() {
-        Publishers.CombineLatest3($selectedCuisines, $selectedPriceLevels, $minimumRating)
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-            }
-            .store(in: &cancellables)
+    func requestLocationPermission() {
+        locationManager.requestWhenInUseAuthorization()
     }
 }
 
-// MARK: - Preview Helper
-
+// MARK: - Errors
 extension HomeViewModel {
-    static var preview: HomeViewModel {
-        let viewModel = HomeViewModel()
-        viewModel.featuredRestaurants = Restaurant.samples
-        viewModel.nearbyRestaurants = Restaurant.samples
-        return viewModel
+    enum LocationError: LocalizedError {
+        case locationNotAvailable
+        
+        var errorDescription: String? {
+            switch self {
+            case .locationNotAvailable:
+                return "Unable to get your location. Please enable location services to see nearby restaurants."
+            }
+        }
     }
 } 

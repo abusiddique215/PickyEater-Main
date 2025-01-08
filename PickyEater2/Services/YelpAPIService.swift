@@ -1,200 +1,326 @@
 import Foundation
+import CoreLocation
 
 actor YelpAPIService {
-    private let baseURL = "https://api.yelp.com/v3"
     private let apiKey: String
+    private let baseURL = "https://api.yelp.com/v3"
     private let session: URLSession
     
-    init() {
-        // In a real app, this would be stored securely in the keychain or environment
-        apiKey = "YOUR_YELP_API_KEY"
+    enum YelpError: Error {
+        case invalidURL
+        case invalidResponse
+        case networkError(Error)
+        case decodingError(Error)
+        case apiError(String)
+        case missingAPIKey
         
+        var localizedDescription: String {
+            switch self {
+            case .invalidURL:
+                return "Invalid URL"
+            case .invalidResponse:
+                return "Invalid response from server"
+            case .networkError(let error):
+                return "Network error: \(error.localizedDescription)"
+            case .decodingError(let error):
+                return "Failed to decode response: \(error.localizedDescription)"
+            case .apiError(let message):
+                return "API error: \(message)"
+            case .missingAPIKey:
+                return "Yelp API key is missing"
+            }
+        }
+    }
+    
+    init(apiKey: String = ProcessInfo.processInfo.environment["YELP_API_KEY"] ?? "") {
+        self.apiKey = apiKey
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
-        config.timeoutIntervalForResource = 300
-        session = URLSession(configuration: config)
+        config.httpAdditionalHeaders = [
+            "Authorization": "Bearer \(apiKey)",
+            "Accept": "application/json"
+        ]
+        self.session = URLSession(configuration: config)
     }
     
     func searchRestaurants(
-        latitude: Double,
-        longitude: Double,
+        location: CLLocation,
         term: String? = nil,
-        categories: String? = nil,
-        price: String? = nil,
+        categories: [String]? = nil,
+        price: PriceRange? = nil,
         radius: Int? = nil,
         limit: Int = 20,
-        offset: Int = 0
-    ) async throws -> [YelpBusiness] {
-        var components = URLComponents(string: "\(baseURL)/businesses/search")!
+        offset: Int = 0,
+        sortBy: String = "best_match"
+    ) async throws -> [Restaurant] {
+        guard !apiKey.isEmpty else {
+            throw YelpError.missingAPIKey
+        }
         
-        // Required parameters
-        components.queryItems = [
-            URLQueryItem(name: "latitude", value: String(latitude)),
-            URLQueryItem(name: "longitude", value: String(longitude)),
+        var components = URLComponents(string: "\(baseURL)/businesses/search")
+        var queryItems = [
+            URLQueryItem(name: "latitude", value: String(location.coordinate.latitude)),
+            URLQueryItem(name: "longitude", value: String(location.coordinate.longitude)),
             URLQueryItem(name: "limit", value: String(limit)),
-            URLQueryItem(name: "offset", value: String(offset))
+            URLQueryItem(name: "offset", value: String(offset)),
+            URLQueryItem(name: "sort_by", value: sortBy)
         ]
         
-        // Optional parameters
         if let term = term {
-            components.queryItems?.append(URLQueryItem(name: "term", value: term))
+            queryItems.append(URLQueryItem(name: "term", value: term))
         }
         
         if let categories = categories {
-            components.queryItems?.append(URLQueryItem(name: "categories", value: categories))
+            queryItems.append(URLQueryItem(name: "categories", value: categories.joined(separator: ",")))
         }
         
         if let price = price {
-            components.queryItems?.append(URLQueryItem(name: "price", value: price))
+            queryItems.append(URLQueryItem(name: "price", value: String(price.rawValue)))
         }
         
         if let radius = radius {
-            components.queryItems?.append(URLQueryItem(name: "radius", value: String(radius)))
+            queryItems.append(URLQueryItem(name: "radius", value: String(radius)))
         }
         
-        var request = URLRequest(url: components.url!)
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        components?.queryItems = queryItems
         
-        let (data, response) = try await session.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
+        guard let url = components?.url else {
+            throw YelpError.invalidURL
         }
         
-        switch httpResponse.statusCode {
-        case 200:
-            let decoder = JSONDecoder()
-            let searchResponse = try decoder.decode(YelpSearchResponse.self, from: data)
-            return searchResponse.businesses
-        case 401:
-            throw APIError.unauthorized
-        case 429:
-            throw APIError.rateLimitExceeded
-        default:
-            throw APIError.httpError(statusCode: httpResponse.statusCode)
+        do {
+            let (data, response) = try await session.data(from: url)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw YelpError.invalidResponse
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                throw YelpError.apiError("HTTP \(httpResponse.statusCode)")
+            }
+            
+            let searchResponse = try JSONDecoder().decode(YelpSearchResponse.self, from: data)
+            return searchResponse.businesses.map { $0.toRestaurant() }
+        } catch let error as DecodingError {
+            throw YelpError.decodingError(error)
+        } catch {
+            throw YelpError.networkError(error)
         }
     }
     
-    func fetchBusinessDetails(id: String) async throws -> YelpBusiness {
-        let url = URL(string: "\(baseURL)/businesses/\(id)")!
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        
-        let (data, response) = try await session.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
+    func fetchRestaurantDetails(id: String) async throws -> Restaurant {
+        guard !apiKey.isEmpty else {
+            throw YelpError.missingAPIKey
         }
         
-        switch httpResponse.statusCode {
-        case 200:
-            let decoder = JSONDecoder()
-            return try decoder.decode(YelpBusiness.self, from: data)
-        case 401:
-            throw APIError.unauthorized
-        case 429:
-            throw APIError.rateLimitExceeded
-        default:
-            throw APIError.httpError(statusCode: httpResponse.statusCode)
+        guard let url = URL(string: "\(baseURL)/businesses/\(id)") else {
+            throw YelpError.invalidURL
+        }
+        
+        do {
+            let (data, response) = try await session.data(from: url)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw YelpError.invalidResponse
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                throw YelpError.apiError("HTTP \(httpResponse.statusCode)")
+            }
+            
+            let business = try JSONDecoder().decode(YelpBusiness.self, from: data)
+            return business.toRestaurant()
+        } catch let error as DecodingError {
+            throw YelpError.decodingError(error)
+        } catch {
+            throw YelpError.networkError(error)
+        }
+    }
+    
+    func fetchReviews(for id: String) async throws -> [Review] {
+        guard !apiKey.isEmpty else {
+            throw YelpError.missingAPIKey
+        }
+        
+        guard let url = URL(string: "\(baseURL)/businesses/\(id)/reviews") else {
+            throw YelpError.invalidURL
+        }
+        
+        do {
+            let (data, response) = try await session.data(from: url)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw YelpError.invalidResponse
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                throw YelpError.apiError("HTTP \(httpResponse.statusCode)")
+            }
+            
+            let reviewResponse = try JSONDecoder().decode(YelpReviewResponse.self, from: data)
+            return reviewResponse.reviews.map { $0.toReview() }
+        } catch let error as DecodingError {
+            throw YelpError.decodingError(error)
+        } catch {
+            throw YelpError.networkError(error)
         }
     }
 }
 
-// MARK: - API Error
-
-enum APIError: LocalizedError {
-    case invalidResponse
-    case unauthorized
-    case rateLimitExceeded
-    case httpError(statusCode: Int)
-    
-    var errorDescription: String? {
-        switch self {
-        case .invalidResponse:
-            return "Invalid response from the server."
-        case .unauthorized:
-            return "Unauthorized access. Please check your API key."
-        case .rateLimitExceeded:
-            return "Rate limit exceeded. Please try again later."
-        case .httpError(let statusCode):
-            return "HTTP error: \(statusCode)"
-        }
-    }
-}
-
-// MARK: - Yelp Models
-
-struct YelpSearchResponse: Codable {
+// MARK: - Response Models
+private struct YelpSearchResponse: Codable {
     let businesses: [YelpBusiness]
     let total: Int
 }
 
-struct YelpBusiness: Codable {
+private struct YelpBusiness: Codable {
     let id: String
     let name: String
     let imageUrl: String
-    let url: String
     let rating: Double
     let reviewCount: Int
     let price: String?
-    let phone: String
-    let distance: Double
     let categories: [YelpCategory]
-    let coordinates: YelpCoordinates
     let location: YelpLocation
+    let coordinates: YelpCoordinates
+    let phone: String
+    let distance: Double?
     let hours: [YelpHours]?
-}
-
-struct YelpCategory: Codable {
-    let alias: String
-    let title: String
-}
-
-struct YelpCoordinates: Codable {
-    let latitude: Double
-    let longitude: Double
-}
-
-struct YelpLocation: Codable {
-    let address1: String
-    let city: String
-    let state: String
-    let zipCode: String
-    let country: String
+    let isClosed: Bool
     
-    enum CodingKeys: String, CodingKey {
-        case address1
-        case city
-        case state
-        case zipCode = "zip_code"
-        case country
+    struct YelpCategory: Codable {
+        let alias: String
+        let title: String
+    }
+    
+    struct YelpLocation: Codable {
+        let address1: String
+        let address2: String?
+        let address3: String?
+        let city: String
+        let state: String
+        let zipCode: String
+        let country: String
+        
+        enum CodingKeys: String, CodingKey {
+            case address1, address2, address3, city, state, country
+            case zipCode = "zip_code"
+        }
+    }
+    
+    struct YelpCoordinates: Codable {
+        let latitude: Double
+        let longitude: Double
+    }
+    
+    struct YelpHours: Codable {
+        let open: [OpenPeriod]
+        let hoursType: String
+        let isOpenNow: Bool
+        
+        struct OpenPeriod: Codable {
+            let day: Int
+            let start: String
+            let end: String
+            let isOvernight: Bool
+        }
+        
+        enum CodingKeys: String, CodingKey {
+            case open
+            case hoursType = "hours_type"
+            case isOpenNow = "is_open_now"
+        }
+    }
+    
+    func toRestaurant() -> Restaurant {
+        let formattedAddress = [
+            location.address1,
+            location.address2,
+            location.address3
+        ]
+        .compactMap { $0 }
+        .filter { !$0.isEmpty }
+        .joined(separator: " ")
+        + ", \(location.city), \(location.state) \(location.zipCode)"
+        
+        let priceRange: PriceRange
+        if let price = price {
+            priceRange = PriceRange(rawValue: price.count) ?? .medium
+        } else {
+            priceRange = .medium
+        }
+        
+        let openingHours: [Restaurant.OpeningHours]
+        if let businessHours = hours?.first?.open {
+            openingHours = businessHours.map { period in
+                Restaurant.OpeningHours(
+                    day: period.day,
+                    start: period.start,
+                    end: period.end,
+                    isOvernight: period.isOvernight
+                )
+            }
+        } else {
+            openingHours = []
+        }
+        
+        return Restaurant(
+            id: id,
+            name: name,
+            imageUrl: imageUrl,
+            rating: rating,
+            reviewCount: reviewCount,
+            priceRange: priceRange,
+            categories: categories.map(\.title),
+            address: formattedAddress,
+            coordinates: CLLocationCoordinate2D(
+                latitude: coordinates.latitude,
+                longitude: coordinates.longitude
+            ),
+            phone: phone,
+            distance: distance ?? 0,
+            isOpen: !(hours?.first?.isOpenNow ?? true),
+            hours: openingHours
+        )
     }
 }
 
-struct YelpHours: Codable {
-    let open: [YelpOpenHours]
-    let hoursType: String
-    let isOpenNow: Bool
+private struct YelpReviewResponse: Codable {
+    let reviews: [YelpReview]
+    let total: Int
     
-    enum CodingKeys: String, CodingKey {
-        case open
-        case hoursType = "hours_type"
-        case isOpenNow = "is_open_now"
-    }
-}
-
-struct YelpOpenHours: Codable {
-    let day: Int
-    let start: String
-    let end: String
-    let isOvernight: Bool
-    
-    enum CodingKeys: String, CodingKey {
-        case day
-        case start
-        case end
-        case isOvernight = "is_overnight"
+    struct YelpReview: Codable {
+        let id: String
+        let rating: Double
+        let user: YelpUser
+        let text: String
+        let timeCreated: String
+        let url: String
+        
+        struct YelpUser: Codable {
+            let id: String
+            let profileUrl: String?
+            let imageUrl: String?
+            let name: String
+        }
+        
+        enum CodingKeys: String, CodingKey {
+            case id, rating, user, text, url
+            case timeCreated = "time_created"
+        }
+        
+        func toReview() -> Review {
+            let dateFormatter = ISO8601DateFormatter()
+            dateFormatter.formatOptions = [.withFullDate, .withTime, .withDashSeparatorInDate, .withColonSeparatorInTime]
+            
+            return Review(
+                id: id,
+                rating: rating,
+                userName: user.name,
+                userImageUrl: user.imageUrl,
+                text: text,
+                timeCreated: dateFormatter.date(from: timeCreated) ?? Date(),
+                url: url
+            )
+        }
     }
 }

@@ -1,103 +1,82 @@
 import Foundation
+import CoreLocation
 
-struct Restaurant: Identifiable, Codable {
+struct Restaurant: Identifiable, Codable, Equatable {
     let id: String
     let name: String
-    let cuisineType: String
+    let imageUrl: String
     let rating: Double
-    let priceLevel: String
-    let imageURL: URL?
-    var isFavorite: Bool = false
+    let reviewCount: Int
+    let priceRange: PriceRange
+    let categories: [String]
+    let address: String
+    let coordinates: CLLocationCoordinate2D
+    let phone: String
+    let distance: Double // in meters
+    let isOpen: Bool
+    let hours: [OpeningHours]
     
-    // Optional properties
-    var phoneNumber: String?
-    var address: String?
-    var city: String?
-    var state: String?
-    var zipCode: String?
-    var latitude: Double?
-    var longitude: Double?
-    var distance: Double?
-    var reviewCount: Int?
-    var hours: [BusinessHours]?
-    
-    // Computed properties
-    var formattedAddress: String? {
-        guard let address = address,
-              let city = city,
-              let state = state,
-              let zipCode = zipCode else { return nil }
-        return "\(address), \(city), \(state) \(zipCode)"
-    }
-    
-    var coordinates: (latitude: Double, longitude: Double)? {
-        guard let latitude = latitude,
-              let longitude = longitude else { return nil }
-        return (latitude, longitude)
+    struct OpeningHours: Codable, Equatable {
+        let day: Int // 0 = Sunday, 6 = Saturday
+        let start: String // "0800"
+        let end: String // "2200"
+        let isOvernight: Bool
     }
 }
 
-struct BusinessHours: Codable {
-    let day: Int // 0 = Sunday, 1 = Monday, etc.
-    let open: String
-    let close: String
-    let isOvernight: Bool
+// MARK: - CLLocationCoordinate2D Codable
+extension CLLocationCoordinate2D: Codable {
+    enum CodingKeys: String, CodingKey {
+        case latitude
+        case longitude
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let latitude = try container.decode(Double.self, forKey: .latitude)
+        let longitude = try container.decode(Double.self, forKey: .longitude)
+        self.init(latitude: latitude, longitude: longitude)
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(latitude, forKey: .latitude)
+        try container.encode(longitude, forKey: .longitude)
+    }
 }
 
-// MARK: - Sample Data
-
+// MARK: - Restaurant Equatable
 extension Restaurant {
-    static let sample = Restaurant(
-        id: "1",
-        name: "Sample Restaurant",
-        cuisineType: "Italian",
-        rating: 4.5,
-        priceLevel: "$$$",
-        imageURL: nil,
-        phoneNumber: "(555) 123-4567",
-        address: "123 Main St",
-        city: "San Francisco",
-        state: "CA",
-        zipCode: "94105",
-        latitude: 37.7749,
-        longitude: -122.4194,
-        distance: 1200,
-        reviewCount: 256,
-        hours: [
-            BusinessHours(day: 1, open: "11:00", close: "22:00", isOvernight: false),
-            BusinessHours(day: 2, open: "11:00", close: "22:00", isOvernight: false),
-            BusinessHours(day: 3, open: "11:00", close: "22:00", isOvernight: false),
-            BusinessHours(day: 4, open: "11:00", close: "23:00", isOvernight: false),
-            BusinessHours(day: 5, open: "11:00", close: "23:00", isOvernight: false),
-            BusinessHours(day: 6, open: "10:00", close: "23:00", isOvernight: false),
-            BusinessHours(day: 0, open: "10:00", close: "22:00", isOvernight: false)
-        ]
-    )
-    
-    static let samples = [
+    static func == (lhs: Restaurant, rhs: Restaurant) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+// MARK: - Preview Helper
+extension Restaurant {
+    static var preview: Restaurant {
         Restaurant(
             id: "1",
-            name: "Italian Delight",
-            cuisineType: "Italian",
+            name: "Sample Restaurant",
+            imageUrl: "https://example.com/image.jpg",
             rating: 4.5,
-            priceLevel: "$$$",
-            imageURL: nil
-        ),
-        Restaurant(
-            id: "2",
-            name: "Sushi Express",
-            cuisineType: "Japanese",
-            rating: 4.8,
-            priceLevel: "$$",
-            imageURL: nil
-        ),
-        Restaurant(
-            id: "3",
-            name: "Taco Paradise",
-            cuisineType: "Mexican",
-            rating: 4.2,
-            priceLevel: "$",
-            imageURL: nil
+            reviewCount: 123,
+            priceRange: .medium,
+            categories: ["Italian", "Pizza", "Pasta"],
+            address: "123 Main St, San Francisco, CA 94105",
+            coordinates: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+            phone: "(415) 555-0123",
+            distance: 1200,
+            isOpen: true,
+            hours: [
+                OpeningHours(day: 0, start: "1100", end: "2200", isOvernight: false),
+                OpeningHours(day: 1, start: "1100", end: "2200", isOvernight: false),
+                OpeningHours(day: 2, start: "1100", end: "2200", isOvernight: false),
+                OpeningHours(day: 3, start: "1100", end: "2200", isOvernight: false),
+                OpeningHours(day: 4, start: "1100", end: "2300", isOvernight: false),
+                OpeningHours(day: 5, start: "1100", end: "2300", isOvernight: false),
+                OpeningHours(day: 6, start: "1100", end: "2200", isOvernight: false)
+            ]
         )
-    ]
+    }
 } 
