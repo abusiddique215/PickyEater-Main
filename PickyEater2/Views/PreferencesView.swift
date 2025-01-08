@@ -1,202 +1,122 @@
-import LocalAuthentication
-import SwiftData
 import SwiftUI
 
 struct PreferencesView: View {
+    @StateObject private var viewModel = PreferencesViewModel()
     @Environment(\.dismiss) private var dismiss
-    @Binding var preferences: UserPreferences
-    @State private var selectedRestrictions: Set<String> = []
-    @State private var isAuthenticated = false
-
-    // Modern color scheme (matching our other views)
-    private let colors = (
-        background: Color.black,
-        primary: Color(red: 0.98, green: 0.24, blue: 0.25), // DoorDash red
-        secondary: Color(red: 0.97, green: 0.97, blue: 0.97), // Light gray
-        text: Color.white,
-        cardBackground: Color(white: 0.12) // Slightly lighter than black
-    )
-
-    private let dietaryOptions = [
-        "Vegetarian",
-        "Vegan",
-        "Gluten-Free",
-        "Halal",
-        "Kosher",
-        "Dairy-Free",
-    ]
-
+    @State private var showingValidationAlert = false
+    
     var body: some View {
-        Group {
-            if isAuthenticated {
-                preferencesContent
-            } else {
-                AuthenticationView(isAuthenticated: $isAuthenticated)
-            }
-        }
-    }
-
-    private var preferencesContent: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Dietary Restrictions Section
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("DIETARY RESTRICTIONS")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(colors.secondary)
-                            .padding(.horizontal)
-
-                        VStack(spacing: 2) {
-                            ForEach(dietaryOptions, id: \.self) { option in
-                                DietaryToggleRowModern(
-                                    option: option,
-                                    isSelected: selectedRestrictions.contains(option),
-                                    onToggle: { isSelected in
-                                        if isSelected {
-                                            selectedRestrictions.insert(option)
-                                        } else {
-                                            selectedRestrictions.remove(option)
-                                        }
-                                        preferences.dietaryRestrictions = Array(selectedRestrictions)
-                                    },
-                                    colors: colors
-                                )
-
-                                if option != dietaryOptions.last {
-                                    Divider()
-                                        .background(Color(white: 0.2))
-                                }
-                            }
-                        }
-                        .background(colors.cardBackground)
-                        .cornerRadius(16)
-                    }
-
-                    // Price Range Section
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("PRICE RANGE")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(colors.secondary)
-                            .padding(.horizontal)
-
-                        HStack(spacing: 12) {
-                            ForEach(1 ... 4, id: \.self) { price in
-                                Button {
-                                    preferences.priceRange = price
-                                } label: {
-                                    Text(String(repeating: "$", count: price))
-                                        .font(.headline)
-                                        .foregroundColor(preferences.priceRange == price ? colors.primary : colors.text)
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 44)
-                                        .background(
-                                            preferences.priceRange == price ?
-                                                colors.cardBackground : Color(white: 0.08)
-                                        )
-                                        .cornerRadius(12)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(
-                                                    preferences.priceRange == price ?
-                                                        colors.primary : Color.clear,
-                                                    lineWidth: 1
-                                                )
-                                        )
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-
-                    // Distance Section
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("MAXIMUM DISTANCE")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(colors.secondary)
-                            .padding(.horizontal)
-
-                        VStack(spacing: 12) {
-                            HStack {
-                                Text("\(preferences.maxDistance) km")
-                                    .font(.headline)
-                                    .foregroundColor(colors.text)
-                                Spacer()
-                            }
-
-                            Slider(
-                                value: .init(
-                                    get: { Double(preferences.maxDistance) },
-                                    set: { preferences.maxDistance = Int($0) }
-                                ),
-                                in: 1 ... 20,
-                                step: 1
-                            )
-                            .tint(colors.primary)
-
-                            HStack {
-                                Text("1 km")
-                                Spacer()
-                                Text("20 km")
-                            }
-                            .font(.caption)
-                            .foregroundColor(colors.secondary)
-                        }
-                        .padding()
-                        .background(colors.cardBackground)
-                        .cornerRadius(16)
+        NavigationView {
+            Form {
+                // MARK: - Dietary Restrictions
+                Section(header: Text("Dietary Restrictions")) {
+                    ForEach(DietaryRestriction.allCases, id: \.self) { restriction in
+                        Toggle(restriction.description, isOn: Binding(
+                            get: { viewModel.isDietaryRestrictionEnabled(restriction) },
+                            set: { _ in viewModel.toggleDietaryRestriction(restriction) }
+                        ))
                     }
                 }
-                .padding()
+                
+                // MARK: - Cuisine Preferences
+                Section(
+                    header: Text("Cuisine Preferences"),
+                    footer: Text("Select at least one cuisine type")
+                ) {
+                    ForEach(viewModel.availableCuisines, id: \.self) { cuisine in
+                        Toggle(cuisine, isOn: Binding(
+                            get: { viewModel.isCuisineSelected(cuisine) },
+                            set: { _ in viewModel.toggleCuisinePreference(cuisine) }
+                        ))
+                    }
+                }
+                
+                // MARK: - Price Range
+                Section(header: Text("Price Range")) {
+                    Picker("Maximum Price", selection: Binding(
+                        get: { viewModel.priceRange ?? .medium },
+                        set: { viewModel.priceRange = $0 }
+                    )) {
+                        ForEach(PriceRange.allCases, id: \.self) { range in
+                            Text(range.description)
+                                .tag(range)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                
+                // MARK: - Rating
+                Section(header: Text("Minimum Rating")) {
+                    Picker("Minimum Rating", selection: Binding(
+                        get: { viewModel.minimumRating ?? 0 },
+                        set: { viewModel.minimumRating = $0 }
+                    )) {
+                        Text("Any").tag(0.0)
+                        ForEach([3.0, 3.5, 4.0, 4.5], id: \.self) { rating in
+                            Text(String(format: "%.1f★", rating)).tag(rating)
+                        }
+                    }
+                }
+                
+                // MARK: - Distance
+                Section(header: Text("Maximum Distance")) {
+                    Picker("Maximum Distance", selection: Binding(
+                        get: { viewModel.maximumDistance ?? 5000 },
+                        set: { viewModel.maximumDistance = $0 }
+                    )) {
+                        Text("1 km").tag(1000.0)
+                        Text("2 km").tag(2000.0)
+                        Text("5 km").tag(5000.0)
+                        Text("10 km").tag(10000.0)
+                        Text("20 km").tag(20000.0)
+                    }
+                }
+                
+                // MARK: - Sort Options
+                Section(header: Text("Sort Results By")) {
+                    Picker("Sort By", selection: $viewModel.sortBy) {
+                        Text("Best Match").tag(UserPreferences.SortOption.bestMatch)
+                        Text("Rating").tag(UserPreferences.SortOption.rating)
+                        Text("Review Count").tag(UserPreferences.SortOption.reviewCount)
+                        Text("Distance").tag(UserPreferences.SortOption.distance)
+                    }
+                }
+                
+                // MARK: - Reset Button
+                Section {
+                    Button(role: .destructive, action: viewModel.resetAllPreferences) {
+                        Text("Reset All Preferences")
+                    }
+                }
             }
-            .background(colors.background.ignoresSafeArea())
             .navigationTitle("Preferences")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(colors.primary)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        if viewModel.validatePreferences() {
+                            dismiss()
+                        } else {
+                            showingValidationAlert = true
+                        }
+                    }
                 }
             }
-            .onAppear {
-                selectedRestrictions = Set(preferences.dietaryRestrictions)
+            .alert("Invalid Preferences", isPresented: $showingValidationAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Please select at least one cuisine type and ensure all values are valid.")
             }
         }
-    }
-}
-
-struct DietaryToggleRowModern: View {
-    let option: String
-    let isSelected: Bool
-    let onToggle: (Bool) -> Void
-    let colors: (
-        background: Color,
-        primary: Color,
-        secondary: Color,
-        text: Color,
-        cardBackground: Color
-    )
-
-    var body: some View {
-        Toggle(isOn: Binding(
-            get: { isSelected },
-            set: onToggle
-        )) {
-            Text(option)
-                .foregroundColor(colors.text)
-        }
-        .tint(colors.primary)
-        .padding()
     }
 }
 
 #Preview {
-    PreferencesView(preferences: .constant(UserPreferences()))
-        .modelContainer(for: UserPreferences.self, inMemory: true)
-        .preferredColorScheme(.dark)
+    PreferencesView()
 }
