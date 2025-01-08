@@ -1,15 +1,31 @@
-// swift-tools-version:5.5
+// swift-tools-version: 5.9
 import PackageDescription
 
 let package = Package(
     name: "PickyEater2",
     platforms: [
-        .macOS(.v12),
+        .iOS(.v17),
+        .macOS(.v14)
+    ],
+    products: [
+        .library(
+            name: "PickyEater2",
+            targets: ["PickyEater2"]
+        ),
+    ],
+    dependencies: [
+        // Add any external dependencies here
     ],
     targets: [
-        .executableTarget(
+        .target(
             name: "PickyEater2",
-            path: "Sources"
+            dependencies: [],
+            path: "PickyEater2"
         ),
+        .testTarget(
+            name: "PickyEater2Tests",
+            dependencies: ["PickyEater2"],
+            path: "PickyEater2Tests"
+        )
     ]
 )
