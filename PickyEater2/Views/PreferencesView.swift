@@ -4,11 +4,12 @@ struct PreferencesView: View {
     @StateObject private var viewModel = PreferencesViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showingValidationAlert = false
-    
+
     var body: some View {
         NavigationView {
             Form {
                 // MARK: - Dietary Restrictions
+
                 Section(header: Text("Dietary Restrictions")) {
                     ForEach(DietaryRestriction.allCases, id: \.self) { restriction in
                         Toggle(restriction.description, isOn: Binding(
@@ -17,8 +18,9 @@ struct PreferencesView: View {
                         ))
                     }
                 }
-                
+
                 // MARK: - Cuisine Preferences
+
                 Section(
                     header: Text("Cuisine Preferences"),
                     footer: Text("Select at least one cuisine type")
@@ -30,8 +32,9 @@ struct PreferencesView: View {
                         ))
                     }
                 }
-                
+
                 // MARK: - Price Range
+
                 Section(header: Text("Price Range")) {
                     Picker("Maximum Price", selection: Binding(
                         get: { viewModel.priceRange ?? .medium },
@@ -44,8 +47,9 @@ struct PreferencesView: View {
                     }
                     .pickerStyle(.segmented)
                 }
-                
+
                 // MARK: - Rating
+
                 Section(header: Text("Minimum Rating")) {
                     Picker("Minimum Rating", selection: Binding(
                         get: { viewModel.minimumRating ?? 0 },
@@ -57,8 +61,9 @@ struct PreferencesView: View {
                         }
                     }
                 }
-                
+
                 // MARK: - Distance
+
                 Section(header: Text("Maximum Distance")) {
                     Picker("Maximum Distance", selection: Binding(
                         get: { viewModel.maximumDistance ?? 5000 },
@@ -71,8 +76,9 @@ struct PreferencesView: View {
                         Text("20 km").tag(20000.0)
                     }
                 }
-                
+
                 // MARK: - Sort Options
+
                 Section(header: Text("Sort Results By")) {
                     Picker("Sort By", selection: $viewModel.sortBy) {
                         Text("Best Match").tag(UserPreferences.SortOption.bestMatch)
@@ -81,8 +87,9 @@ struct PreferencesView: View {
                         Text("Distance").tag(UserPreferences.SortOption.distance)
                     }
                 }
-                
+
                 // MARK: - Reset Button
+
                 Section {
                     Button(role: .destructive, action: viewModel.resetAllPreferences) {
                         Text("Reset All Preferences")
@@ -97,7 +104,7 @@ struct PreferencesView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         if viewModel.validatePreferences() {
@@ -109,7 +116,7 @@ struct PreferencesView: View {
                 }
             }
             .alert("Invalid Preferences", isPresented: $showingValidationAlert) {
-                Button("OK", role: .cancel) { }
+                Button("OK", role: .cancel) {}
             } message: {
                 Text("Please select at least one cuisine type and ensure all values are valid.")
             }

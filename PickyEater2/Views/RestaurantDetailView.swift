@@ -1,14 +1,14 @@
-import SwiftUI
 import MapKit
+import SwiftUI
 
 struct RestaurantDetailView: View {
     @StateObject private var viewModel: RestaurantDetailViewModel
     @Environment(\.dismiss) private var dismiss
-    
+
     init(restaurant: Restaurant, yelpService: YelpAPIService) {
         _viewModel = StateObject(wrappedValue: RestaurantDetailViewModel(restaurant: restaurant, yelpService: yelpService))
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -23,22 +23,22 @@ struct RestaurantDetailView: View {
                 }
                 .frame(height: 200)
                 .clipped()
-                
+
                 // Restaurant Info
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text(viewModel.restaurant.name)
                             .font(.title)
                             .fontWeight(.bold)
-                        
+
                         Spacer()
-                        
+
                         Button(action: { viewModel.toggleFavorite() }) {
                             Image(systemName: viewModel.isFavorite ? "heart.fill" : "heart")
                                 .foregroundColor(viewModel.isFavorite ? .red : .gray)
                         }
                     }
-                    
+
                     // Rating and Price
                     HStack {
                         RatingView(rating: viewModel.restaurant.rating)
@@ -48,7 +48,7 @@ struct RestaurantDetailView: View {
                         Text(String(repeating: "$", count: viewModel.restaurant.priceRange.rawValue))
                             .foregroundColor(.green)
                     }
-                    
+
                     // Categories
                     FlowLayout(spacing: 8) {
                         ForEach(viewModel.restaurant.categories, id: \.self) { category in
@@ -60,15 +60,15 @@ struct RestaurantDetailView: View {
                                 .cornerRadius(12)
                         }
                     }
-                    
+
                     // Address and Map
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Location")
                             .font(.headline)
-                        
+
                         Text(viewModel.restaurant.address)
                             .foregroundColor(.secondary)
-                        
+
                         Map(coordinateRegion: $viewModel.region, annotationItems: [viewModel.restaurant]) { restaurant in
                             MapMarker(coordinate: CLLocationCoordinate2D(
                                 latitude: restaurant.coordinates.latitude,
@@ -77,20 +77,20 @@ struct RestaurantDetailView: View {
                         }
                         .frame(height: 200)
                         .cornerRadius(12)
-                        
+
                         Button(action: { viewModel.getDirections() }) {
                             Label("Get Directions", systemImage: "location.fill")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
                     }
-                    
+
                     // Reviews
                     if !viewModel.reviews.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Reviews")
                                 .font(.headline)
-                            
+
                             ForEach(viewModel.reviews) { review in
                                 ReviewCard(review: review)
                             }
@@ -121,12 +121,12 @@ struct RestaurantDetailView: View {
 
 struct RatingView: View {
     let rating: Double
-    
+
     var body: some View {
         HStack(spacing: 4) {
-            ForEach(0..<5) { index in
+            ForEach(0 ..< 5) { index in
                 Image(systemName: index < Int(rating) ? "star.fill" :
-                        (rating - Double(index) >= 0.5 ? "star.leadinghalf.filled" : "star"))
+                    (rating - Double(index) >= 0.5 ? "star.leadinghalf.filled" : "star"))
                     .foregroundColor(.yellow)
             }
         }
@@ -135,7 +135,7 @@ struct RatingView: View {
 
 struct ReviewCard: View {
     let review: Review
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -145,11 +145,11 @@ struct ReviewCard: View {
                 Spacer()
                 RatingView(rating: review.rating)
             }
-            
+
             Text(review.text)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-            
+
             Text(review.timeCreated.formatted(date: .abbreviated, time: .omitted))
                 .font(.caption)
                 .foregroundColor(.tertiary)
@@ -163,18 +163,18 @@ struct ReviewCard: View {
 
 struct FlowLayout: Layout {
     var spacing: CGFloat
-    
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) -> CGSize {
         let result = FlowResult(in: proposal.width ?? 0, subviews: subviews, spacing: spacing)
         return result.size
     }
-    
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+
+    func placeSubviews(in bounds: CGRect, proposal _: ProposedViewSize, subviews: Subviews, cache _: inout ()) {
         let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
         for (index, line) in result.lines.enumerated() {
             let y = result.lineY[index]
             var x = bounds.minX
-            
+
             for item in line {
                 let position = CGPoint(x: x, y: y)
                 subviews[item.index].place(at: position, proposal: ProposedViewSize(item.size))
@@ -182,23 +182,23 @@ struct FlowLayout: Layout {
             }
         }
     }
-    
+
     struct FlowResult {
         var lines: [[Item]] = [[]]
         var lineY: [CGFloat] = [0]
         var size: CGSize = .zero
-        
+
         struct Item {
             let index: Int
             let size: CGSize
         }
-        
+
         init(in width: CGFloat, subviews: Subviews, spacing: CGFloat) {
             var x: CGFloat = 0
             var y: CGFloat = 0
             var lineHeight: CGFloat = 0
             var lineIndex = 0
-            
+
             for (index, subview) in subviews.enumerated() {
                 let size = subview.sizeThatFits(.unspecified)
                 if x + size.width > width, !lines[lineIndex].isEmpty {
@@ -210,12 +210,12 @@ struct FlowLayout: Layout {
                     lines.append([])
                     lineY.append(y)
                 }
-                
+
                 lines[lineIndex].append(Item(index: index, size: size))
                 x += size.width + spacing
                 lineHeight = max(lineHeight, size.height)
             }
-            
+
             size = CGSize(width: width, height: y + lineHeight)
         }
     }

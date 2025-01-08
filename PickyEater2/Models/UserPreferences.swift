@@ -5,7 +5,7 @@ enum DietaryRestriction: String, CaseIterable, Codable {
     case vegan
     case glutenFree = "gluten-free"
     case dairyFree = "dairy-free"
-    
+
     var description: String {
         switch self {
         case .vegetarian: return "Vegetarian"
@@ -17,11 +17,11 @@ enum DietaryRestriction: String, CaseIterable, Codable {
 }
 
 enum PriceRange: Int, CaseIterable, Codable {
-    case low = 1      // $
-    case medium = 2   // $$
-    case high = 3     // $$$
+    case low = 1 // $
+    case medium = 2 // $$
+    case high = 3 // $$$
     case veryHigh = 4 // $$$$
-    
+
     var description: String {
         String(repeating: "$", count: rawValue)
     }
@@ -34,14 +34,14 @@ struct UserPreferences: Codable {
     var minimumRating: Double?
     var maximumDistance: Double? // in meters
     var sortBy: SortOption
-    
+
     enum SortOption: String, CaseIterable, Codable {
         case bestMatch = "best_match"
-        case rating = "rating"
+        case rating
         case reviewCount = "review_count"
-        case distance = "distance"
+        case distance
     }
-    
+
     init(
         dietaryRestrictions: Set<DietaryRestriction> = [],
         cuisinePreferences: Set<String> = [],
@@ -60,13 +60,15 @@ struct UserPreferences: Codable {
 }
 
 // MARK: - UserDefaults Extension
+
 extension UserDefaults {
     private static let preferencesKey = "user_preferences"
-    
+
     var userPreferences: UserPreferences {
         get {
             guard let data = data(forKey: UserDefaults.preferencesKey),
-                  let preferences = try? JSONDecoder().decode(UserPreferences.self, from: data) else {
+                  let preferences = try? JSONDecoder().decode(UserPreferences.self, from: data)
+            else {
                 return UserPreferences()
             }
             return preferences
@@ -79,9 +81,10 @@ extension UserDefaults {
 }
 
 // MARK: - Notification Support
+
 extension UserPreferences {
     static let preferencesChangedNotification = Notification.Name("UserPreferencesChanged")
-    
+
     func save() {
         UserDefaults.standard.userPreferences = self
         NotificationCenter.default.post(name: Self.preferencesChangedNotification, object: nil)
@@ -89,6 +92,7 @@ extension UserPreferences {
 }
 
 // MARK: - Preference Management
+
 extension UserPreferences {
     mutating func toggleDietaryRestriction(_ restriction: DietaryRestriction) {
         if dietaryRestrictions.contains(restriction) {
@@ -97,7 +101,7 @@ extension UserPreferences {
             dietaryRestrictions.insert(restriction)
         }
     }
-    
+
     mutating func toggleCuisinePreference(_ cuisine: String) {
         if cuisinePreferences.contains(cuisine) {
             cuisinePreferences.remove(cuisine)
@@ -105,7 +109,7 @@ extension UserPreferences {
             cuisinePreferences.insert(cuisine)
         }
     }
-    
+
     mutating func clearAllPreferences() {
         dietaryRestrictions.removeAll()
         cuisinePreferences.removeAll()
@@ -114,26 +118,29 @@ extension UserPreferences {
         maximumDistance = nil
         sortBy = .bestMatch
     }
-    
+
     func matches(_ restaurant: Restaurant) -> Bool {
         // Price range check
         if let preferredPrice = priceRange,
-           restaurant.priceRange.rawValue > preferredPrice.rawValue {
+           restaurant.priceRange.rawValue > preferredPrice.rawValue
+        {
             return false
         }
-        
+
         // Rating check
         if let minRating = minimumRating,
-           restaurant.rating < minRating {
+           restaurant.rating < minRating
+        {
             return false
         }
-        
+
         // Distance check
         if let maxDistance = maximumDistance,
-           restaurant.distance > maxDistance {
+           restaurant.distance > maxDistance
+        {
             return false
         }
-        
+
         // Dietary restrictions check
         if !dietaryRestrictions.isEmpty {
             let restaurantCategories = Set(restaurant.categories.map { $0.lowercased() })
@@ -142,7 +149,7 @@ extension UserPreferences {
                 return false
             }
         }
-        
+
         // Cuisine preferences check
         if !cuisinePreferences.isEmpty {
             let restaurantCuisines = Set(restaurant.categories.map { $0.lowercased() })
@@ -151,7 +158,7 @@ extension UserPreferences {
                 return false
             }
         }
-        
+
         return true
     }
 }

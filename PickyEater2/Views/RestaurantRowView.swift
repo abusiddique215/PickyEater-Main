@@ -2,7 +2,7 @@ import SwiftUI
 
 struct RestaurantRowView: View {
     let restaurant: Restaurant
-    
+
     var body: some View {
         HStack(spacing: 16) {
             // Restaurant Image
@@ -24,37 +24,37 @@ struct RestaurantRowView: View {
                     .background(Color(.systemGray6))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
-            
+
             // Restaurant Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(restaurant.name)
                     .font(.headline)
-                
+
                 Text(restaurant.cuisineType)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                
+
                 HStack(spacing: 8) {
                     // Rating
                     HStack(spacing: 4) {
                         Image(systemName: "star.fill")
                             .font(.caption)
                             .foregroundColor(.yellow)
-                        
+
                         Text(String(format: "%.1f", restaurant.rating))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     // Price Level
                     Text(restaurant.priceLevel)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             Spacer()
-            
+
             // Chevron
             Image(systemName: "chevron.right")
                 .font(.caption)

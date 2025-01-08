@@ -8,11 +8,11 @@ struct Review: Identifiable, Codable, Equatable {
     let text: String
     let timeCreated: Date
     let url: String
-    
+
     static func == (lhs: Review, rhs: Review) -> Bool {
         lhs.id == rhs.id
     }
-    
+
     static var preview: Review {
         Review(
             id: "1",
@@ -24,4 +24,4 @@ struct Review: Identifiable, Codable, Equatable {
             url: "https://www.yelp.com/review/1"
         )
     }
-} 
+}

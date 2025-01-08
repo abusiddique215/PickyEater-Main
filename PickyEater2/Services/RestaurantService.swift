@@ -1,27 +1,27 @@
-import Foundation
 import CoreLocation
+import Foundation
 
 actor RestaurantService {
     private let yelpAPIService: YelpAPIService
     private let locationManager: LocationManager
-    
+
     init(yelpAPIService: YelpAPIService = YelpAPIService(), locationManager: LocationManager = LocationManager()) {
         self.yelpAPIService = yelpAPIService
         self.locationManager = locationManager
     }
-    
+
     func fetchFeaturedRestaurants() async throws -> [Restaurant] {
         guard let location = await locationManager.currentLocation else {
             throw ServiceError.locationNotAvailable
         }
-        
+
         let yelpRestaurants = try await yelpAPIService.searchRestaurants(
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude,
             term: "featured",
             limit: 10
         )
-        
+
         return yelpRestaurants.map { yelpRestaurant in
             Restaurant(
                 id: yelpRestaurant.id,
@@ -42,18 +42,18 @@ actor RestaurantService {
             )
         }
     }
-    
+
     func fetchNearbyRestaurants() async throws -> [Restaurant] {
         guard let location = await locationManager.currentLocation else {
             throw ServiceError.locationNotAvailable
         }
-        
+
         let yelpRestaurants = try await yelpAPIService.searchRestaurants(
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude,
             limit: 20
         )
-        
+
         return yelpRestaurants.map { yelpRestaurant in
             Restaurant(
                 id: yelpRestaurant.id,
@@ -74,10 +74,10 @@ actor RestaurantService {
             )
         }
     }
-    
+
     func fetchRestaurantDetails(id: String) async throws -> Restaurant {
         let yelpRestaurant = try await yelpAPIService.fetchBusinessDetails(id: id)
-        
+
         return Restaurant(
             id: yelpRestaurant.id,
             name: yelpRestaurant.name,
@@ -110,7 +110,7 @@ actor RestaurantService {
 
 enum ServiceError: LocalizedError {
     case locationNotAvailable
-    
+
     var errorDescription: String? {
         switch self {
         case .locationNotAvailable:

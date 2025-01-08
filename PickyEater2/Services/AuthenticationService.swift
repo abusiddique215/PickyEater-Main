@@ -5,28 +5,28 @@ import SwiftUI
 @MainActor
 class AuthenticationService: NSObject, ObservableObject {
     static let shared = AuthenticationService()
-    
+
     @Published var isAuthenticated = false
     @Published var currentUser: User?
     @Published var authError: Error?
-    
-    private override init() {
+
+    override private init() {
         super.init()
         checkAuthenticationState()
     }
-    
+
     func checkAuthenticationState() {
         // Check keychain for stored credentials
         if let userData = KeychainManager.shared.loadUser() {
-            self.currentUser = userData
-            self.isAuthenticated = true
+            currentUser = userData
+            isAuthenticated = true
         }
     }
-    
+
     func signInWithApple() async throws {
         let request = ASAuthorizationAppleIDProvider().createRequest()
         request.requestedScopes = [.fullName, .email]
-        
+
         let result = try await withCheckedThrowingContinuation { continuation in
             let controller = ASAuthorizationController(authorizationRequests: [request])
             let delegate = SignInWithAppleDelegate(continuation: continuation)
@@ -34,32 +34,32 @@ class AuthenticationService: NSObject, ObservableObject {
             controller.presentationContextProvider = delegate
             controller.performRequests()
         }
-        
+
         guard let appleIDCredential = result as? ASAuthorizationAppleIDCredential else {
             throw AuthError.invalidCredential
         }
-        
+
         // Create user from Apple ID credential
         let user = User(
             id: appleIDCredential.user,
             name: [
                 appleIDCredential.fullName?.givenName,
-                appleIDCredential.fullName?.familyName
+                appleIDCredential.fullName?.familyName,
             ].compactMap { $0 }.joined(separator: " "),
             email: appleIDCredential.email ?? ""
         )
-        
+
         // Store user data securely
         try KeychainManager.shared.saveUser(user)
-        
-        self.currentUser = user
-        self.isAuthenticated = true
+
+        currentUser = user
+        isAuthenticated = true
     }
-    
+
     func signOut() {
         KeychainManager.shared.deleteUser()
-        self.currentUser = nil
-        self.isAuthenticated = false
+        currentUser = nil
+        isAuthenticated = false
     }
 }
 
@@ -75,7 +75,7 @@ enum AuthError: Error {
     case invalidCredential
     case signInFailed
     case noUser
-    
+
     var localizedDescription: String {
         switch self {
         case .invalidCredential:
@@ -92,12 +92,12 @@ enum AuthError: Error {
 
 private class SignInWithAppleDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     let continuation: CheckedContinuation<ASAuthorization, Error>
-    
+
     init(continuation: CheckedContinuation<ASAuthorization, Error>) {
         self.continuation = continuation
     }
-    
-    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+
+    func presentationAnchor(for _: ASAuthorizationController) -> ASPresentationAnchor {
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = scene.windows.first
         else {
@@ -105,12 +105,12 @@ private class SignInWithAppleDelegate: NSObject, ASAuthorizationControllerDelega
         }
         return window
     }
-    
-    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+
+    func authorizationController(controller _: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         continuation.resume(returning: authorization)
     }
-    
-    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+
+    func authorizationController(controller _: ASAuthorizationController, didCompleteWithError error: Error) {
         continuation.resume(throwing: error)
     }
-} 
+}

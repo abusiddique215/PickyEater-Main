@@ -4,7 +4,7 @@ struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
     @State private var showingPreferences = false
     @State private var showingRestaurantDetail = false
-    
+
     init(
         yelpService: YelpAPIService,
         locationManager: LocationManager,
@@ -16,7 +16,7 @@ struct HomeView: View {
             filterService: filterService
         ))
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -61,7 +61,7 @@ struct HomeView: View {
             }
         }
     }
-    
+
     private var restaurantList: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
@@ -79,7 +79,7 @@ struct HomeView: View {
 
 private struct RestaurantCard: View {
     let restaurant: Restaurant
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Restaurant Image
@@ -94,7 +94,7 @@ private struct RestaurantCard: View {
             .frame(height: 200)
             .clipped()
             .cornerRadius(12)
-            
+
             // Restaurant Info
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
@@ -104,14 +104,14 @@ private struct RestaurantCard: View {
                     Text(String(repeating: "$", count: restaurant.priceRange.rawValue))
                         .foregroundColor(.green)
                 }
-                
+
                 HStack {
                     RatingView(rating: restaurant.rating)
                     Text("(\(restaurant.reviewCount))")
                         .foregroundColor(.secondary)
                         .font(.subheadline)
                 }
-                
+
                 // Categories
                 FlowLayout(spacing: 4) {
                     ForEach(restaurant.categories, id: \.self) { category in
@@ -123,7 +123,7 @@ private struct RestaurantCard: View {
                             .cornerRadius(8)
                     }
                 }
-                
+
                 // Distance and Status
                 HStack {
                     Image(systemName: "location.fill")
@@ -142,7 +142,7 @@ private struct RestaurantCard: View {
         .cornerRadius(12)
         .shadow(radius: 4)
     }
-    
+
     private func formatDistance(_ distance: Double) -> String {
         let formatter = MeasurementFormatter()
         let measurement = Measurement(value: distance / 1000, unit: UnitLength.kilometers)
@@ -153,21 +153,21 @@ private struct RestaurantCard: View {
 private struct ErrorView: View {
     let error: Error
     let retryAction: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 48))
                 .foregroundColor(.red)
-            
+
             Text("Oops!")
                 .font(.title)
                 .fontWeight(.bold)
-            
+
             Text(error.localizedDescription)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
-            
+
             Button(action: retryAction) {
                 Text("Try Again")
                     .fontWeight(.semibold)
@@ -188,11 +188,11 @@ private struct EmptyStateView: View {
             Image(systemName: "fork.knife.circle")
                 .font(.system(size: 48))
                 .foregroundColor(.secondary)
-            
+
             Text("No Restaurants Found")
                 .font(.title2)
                 .fontWeight(.bold)
-            
+
             Text("Try adjusting your preferences or location to find more restaurants.")
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)

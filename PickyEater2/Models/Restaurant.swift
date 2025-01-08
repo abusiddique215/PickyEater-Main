@@ -1,5 +1,5 @@
-import Foundation
 import CoreLocation
+import Foundation
 
 struct Restaurant: Identifiable, Codable, Equatable {
     let id: String
@@ -15,7 +15,7 @@ struct Restaurant: Identifiable, Codable, Equatable {
     let distance: Double // in meters
     let isOpen: Bool
     let hours: [OpeningHours]
-    
+
     struct OpeningHours: Codable, Equatable {
         let day: Int // 0 = Sunday, 6 = Saturday
         let start: String // "0800"
@@ -25,19 +25,20 @@ struct Restaurant: Identifiable, Codable, Equatable {
 }
 
 // MARK: - CLLocationCoordinate2D Codable
+
 extension CLLocationCoordinate2D: Codable {
     enum CodingKeys: String, CodingKey {
         case latitude
         case longitude
     }
-    
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let latitude = try container.decode(Double.self, forKey: .latitude)
         let longitude = try container.decode(Double.self, forKey: .longitude)
         self.init(latitude: latitude, longitude: longitude)
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(latitude, forKey: .latitude)
@@ -46,6 +47,7 @@ extension CLLocationCoordinate2D: Codable {
 }
 
 // MARK: - Restaurant Equatable
+
 extension Restaurant {
     static func == (lhs: Restaurant, rhs: Restaurant) -> Bool {
         lhs.id == rhs.id
@@ -53,6 +55,7 @@ extension Restaurant {
 }
 
 // MARK: - Preview Helper
+
 extension Restaurant {
     static var preview: Restaurant {
         Restaurant(
@@ -75,8 +78,8 @@ extension Restaurant {
                 OpeningHours(day: 3, start: "1100", end: "2200", isOvernight: false),
                 OpeningHours(day: 4, start: "1100", end: "2300", isOvernight: false),
                 OpeningHours(day: 5, start: "1100", end: "2300", isOvernight: false),
-                OpeningHours(day: 6, start: "1100", end: "2200", isOvernight: false)
+                OpeningHours(day: 6, start: "1100", end: "2200", isOvernight: false),
             ]
         )
     }
-} 
+}
