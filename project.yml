@@ -1,1 +1,72 @@
- 
+name: PickyEater2
+options:
+  bundleIdPrefix: babubhaisab
+  deploymentTarget:
+    iOS: 17.0
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: 5.0
+    DEVELOPMENT_TEAM: K6UBSX4Q43
+
+targets:
+  PickyEater2:
+    type: application
+    platform: iOS
+    sources:
+      - path: PickyEater2
+        excludes:
+          - "Tests/**"
+    settings:
+      base:
+        INFOPLIST_FILE: PickyEater2/Infrastructure/Configuration/Info.plist
+        CODE_SIGN_ENTITLEMENTS: PickyEater2/Infrastructure/Configuration/PickyEater2.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: babubhaisab.PickyEater2
+    dependencies:
+      - sdk: SwiftUI.framework
+      - sdk: CoreData.framework
+      - sdk: CoreLocation.framework
+      - sdk: MapKit.framework
+      - package: Alamofire
+      - package: Kingfisher
+      - package: RevenueCat
+    preBuildScripts:
+      - name: SwiftFormat
+        script: |
+          if which swiftformat >/dev/null; then
+            swiftformat .
+          else
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
+          fi
+        outputFiles:
+          - $(SRCROOT)/$(TARGET_NAME)/**/*.swift
+
+  PickyEater2Tests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: PickyEater2Tests
+    dependencies:
+      - target: PickyEater2
+
+  PickyEater2UITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: PickyEater2UITests
+    dependencies:
+      - target: PickyEater2
+
+packages:
+  Alamofire:
+    url: https://github.com/Alamofire/Alamofire
+    from: 5.8.1
+  Kingfisher:
+    url: https://github.com/onevcat/Kingfisher
+    from: 7.10.2
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios
+    from: 4.31.9 
