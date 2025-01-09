@@ -26,4 +26,4 @@ struct RestaurantRowView: View {
             Text(restaurant.name)
         }
     }
-} 
+}

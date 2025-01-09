@@ -1,5 +1,5 @@
-import Foundation
 import CoreLocation
+import Foundation
 
 @MainActor
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
@@ -24,4 +24,4 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 
     // Other methods...
-} 
+}

@@ -31,32 +31,32 @@ class YelpAPIService {
 
     func fetchNearbyRestaurants() async throws -> [AppRestaurant] {
         // Example fetch logic...
-        
+
         // Example of handling price range
         let price = data["price"] as? String ?? "Other"
         let priceRange = parsePriceRange(from: price)
-        
+
         // Replace `.medium` with `.other`
         let priceLevel = PriceRange(rawValue: price) ?? .other
-        
+
         // Use priceLevel accordingly
         // e.g., assign to `price` property of AppRestaurant
     }
-    
+
     func parsePriceRange(from price: String) -> PriceRange {
         switch price {
         case "$":
-            return .oneDollar
+            .oneDollar
         case "$$":
-            return .twoDollars
+            .twoDollars
         case "$$$":
-            return .threeDollars
+            .threeDollars
         case "$$$$":
-            return .fourDollars
+            .fourDollars
         default:
-            return .other
+            .other
         }
     }
-    
+
     // Other methods...
 }

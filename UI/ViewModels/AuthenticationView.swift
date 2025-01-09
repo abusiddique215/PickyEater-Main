@@ -6,4 +6,4 @@ struct AuthenticationView: View {
     var body: some View {
         // UI implementation...
     }
-} 
+}

@@ -1,5 +1,5 @@
-import SwiftUI
 import MapKit
+import SwiftUI
 
 struct RestaurantMapView: View {
     // Properties...
@@ -9,4 +9,4 @@ struct RestaurantMapView: View {
             // Your view components...
         }
     }
-} 
+}

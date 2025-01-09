@@ -1,4 +1,5 @@
 import SwiftUI
+
 // Import CoreModels if DietaryRestriction is in another module
 // import CoreModels
 
@@ -25,4 +26,4 @@ struct PreferencesView: View {
             // Other form sections...
         }
     }
-} 
+}
