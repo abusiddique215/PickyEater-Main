@@ -114,7 +114,7 @@ enum ServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .locationNotAvailable:
-            return "Location services are not available. Please enable location services to find restaurants near you."
+            "Location services are not available. Please enable location services to find restaurants near you."
         }
     }
 }

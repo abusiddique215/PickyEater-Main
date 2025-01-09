@@ -139,7 +139,7 @@ struct FlowLayout: Layout {
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) -> CGSize {
         let rows = computeRows(proposal: proposal, subviews: subviews)
-        let height = rows.map { $0.height }.reduce(0, +) + spacing * CGFloat(rows.count - 1)
+        let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(rows.count - 1)
         return CGSize(width: proposal.width ?? 0, height: height)
     }
 

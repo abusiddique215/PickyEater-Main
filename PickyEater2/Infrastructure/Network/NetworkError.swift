@@ -11,17 +11,17 @@ enum NetworkError: Error {
     var localizedDescription: String {
         switch self {
         case .invalidURL:
-            return "Invalid URL"
+            "Invalid URL"
         case .noData:
-            return "No data received"
+            "No data received"
         case .decodingError:
-            return "Failed to decode response"
+            "Failed to decode response"
         case let .serverError(code):
-            return "Server error: \(code)"
+            "Server error: \(code)"
         case .noInternet:
-            return "No internet connection"
+            "No internet connection"
         case let .apiError(message):
-            return message
+            message
         }
     }
 }

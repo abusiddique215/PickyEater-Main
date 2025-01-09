@@ -64,11 +64,11 @@ enum KeychainError: Error {
     var localizedDescription: String {
         switch self {
         case let .saveFailed(status):
-            return "Failed to save to Keychain: \(status)"
+            "Failed to save to Keychain: \(status)"
         case let .loadFailed(status):
-            return "Failed to load from Keychain: \(status)"
+            "Failed to load from Keychain: \(status)"
         case let .deleteFailed(status):
-            return "Failed to delete from Keychain: \(status)"
+            "Failed to delete from Keychain: \(status)"
         }
     }
 }

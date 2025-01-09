@@ -96,7 +96,7 @@ extension HomeViewModel {
         var errorDescription: String? {
             switch self {
             case .locationNotAvailable:
-                return "Unable to get your location. Please enable location services to see nearby restaurants."
+                "Unable to get your location. Please enable location services to see nearby restaurants."
             }
         }
     }

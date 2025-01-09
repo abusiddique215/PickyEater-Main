@@ -113,9 +113,9 @@ enum LocationError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .permissionDenied:
-            return "Location access was denied. Please enable location services in Settings to find restaurants near you."
+            "Location access was denied. Please enable location services in Settings to find restaurants near you."
         case .locationUnavailable:
-            return "Unable to determine your location. Please try again later."
+            "Unable to determine your location. Please try again later."
         }
     }
 }

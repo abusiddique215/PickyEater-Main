@@ -1,14 +1,14 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 enum AppTheme: String, Codable {
     case light, dark, system
-    
+
     var colorScheme: ColorScheme? {
         switch self {
-        case .light: return .light
-        case .dark: return .dark
-        case .system: return nil
+        case .light: .light
+        case .dark: .dark
+        case .system: nil
         }
     }
 }
@@ -20,17 +20,17 @@ final class UserPreferences {
     var dietaryRestrictionsData: Data
     var cuisinePreferencesData: Data
     var theme: AppTheme
-    
+
     var dietaryRestrictions: [String] {
         get { decodeArray(from: dietaryRestrictionsData) }
         set { dietaryRestrictionsData = encodeArray(newValue) }
     }
-    
+
     var cuisinePreferences: [String] {
         get { decodeArray(from: cuisinePreferencesData) }
         set { cuisinePreferencesData = encodeArray(newValue) }
     }
-    
+
     init(
         maxDistance: Int = 5,
         priceRange: Int = 2,
@@ -41,8 +41,8 @@ final class UserPreferences {
         self.maxDistance = maxDistance
         self.priceRange = priceRange
         self.theme = theme
-        self.dietaryRestrictionsData = Data()
-        self.cuisinePreferencesData = Data()
+        dietaryRestrictionsData = Data()
+        cuisinePreferencesData = Data()
         self.dietaryRestrictions = dietaryRestrictions
         self.cuisinePreferences = cuisinePreferences
     }
@@ -60,10 +60,10 @@ final class UserPreferences {
         restaurants.filter { restaurant in
             guard let distance = restaurant.distance else { return false }
             return distance <= Double(maxDistance) &&
-                   restaurant.priceRange.rawValue <= priceRange
+                restaurant.priceRange.rawValue <= priceRange
         }
     }
-    
+
     func filterByCategories(_ restaurants: [Restaurant], preferredCategories: [String]) -> [Restaurant] {
         restaurants.filter { restaurant in
             let restaurantCategories = Set(restaurant.categories.map { $0.alias.lowercased() })
@@ -71,4 +71,4 @@ final class UserPreferences {
             return !restaurantCategories.isDisjoint(with: preferred)
         }
     }
-} 
+}

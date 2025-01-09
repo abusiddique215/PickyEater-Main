@@ -10,13 +10,13 @@ enum AuthenticationError: Error {
     var localizedDescription: String {
         switch self {
         case .notAvailable:
-            return "Biometric authentication is not available"
+            "Biometric authentication is not available"
         case let .failed(message):
-            return message
+            message
         case .cancelled:
-            return "Authentication was cancelled"
+            "Authentication was cancelled"
         case .denied:
-            return "Authentication was denied"
+            "Authentication was denied"
         }
     }
 }
@@ -29,11 +29,11 @@ class AuthenticationService: ObservableObject {
     var biometricType: String {
         switch context.biometryType {
         case .faceID:
-            return "Face ID"
+            "Face ID"
         case .touchID:
-            return "Touch ID"
+            "Touch ID"
         default:
-            return "None"
+            "None"
         }
     }
 

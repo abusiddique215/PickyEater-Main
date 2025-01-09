@@ -48,7 +48,7 @@ struct RestaurantListView: View {
                     }
                     .padding()
                 }
-            } else if let error = error {
+            } else if let error {
                 ErrorView(error: error) {
                     Task {
                         await loadRestaurants(forceRefresh: true)
@@ -225,7 +225,7 @@ struct ModernRestaurantCard: View {
                 // Categories and Price
                 if !restaurant.categories.isEmpty {
                     HStack {
-                        Text(restaurant.categories.map { $0.title }.joined(separator: " • "))
+                        Text(restaurant.categories.map(\.title).joined(separator: " • "))
                             .font(.subheadline)
                             .foregroundColor(colors.secondary)
                             .lineLimit(1)

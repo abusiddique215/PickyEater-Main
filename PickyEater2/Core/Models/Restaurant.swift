@@ -21,15 +21,15 @@ enum PriceRange: Int, Codable {
     var rawValueString: String {
         switch self {
         case .$:
-            return "$"
+            "$"
         case $$:
-            return "$$"
+            "$$"
         case $$$:
-            return "$$$"
+            "$$$"
         case $$$$:
-            return "$$$$"
+            "$$$$"
         case .Other:
-            return "Other"
+            "Other"
         }
     }
 }
@@ -48,9 +48,9 @@ struct Restaurant: Codable, Identifiable {
     let imageUrl: String
 
     var priceRange: PriceRange {
-        if let price = price {
+        if let price {
             return PriceRange(from: price)
         }
         return .Other
     }
-} 
+}

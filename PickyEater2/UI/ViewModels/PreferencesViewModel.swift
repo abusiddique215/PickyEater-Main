@@ -111,7 +111,7 @@ class PreferencesViewModel: ObservableObject {
 
         // Validate rating range
         if let rating = preferences.minimumRating {
-            guard rating >= 0 && rating <= 5 else {
+            guard rating >= 0, rating <= 5 else {
                 return false
             }
         }

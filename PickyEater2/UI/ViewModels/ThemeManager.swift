@@ -32,7 +32,7 @@ class ThemeManager: ObservableObject {
     }
 
     func getCurrentTheme() -> ColorScheme {
-        return isDarkMode ? .dark : .light
+        isDarkMode ? .dark : .light
     }
 }
 

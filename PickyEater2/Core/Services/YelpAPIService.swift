@@ -41,21 +41,21 @@ actor YelpAPIService {
         var localizedDescription: String {
             switch self {
             case .invalidURL:
-                return "Invalid URL"
+                "Invalid URL"
             case .invalidResponse:
-                return "Invalid response from server"
+                "Invalid response from server"
             case let .networkError(error):
-                return "Network error: \(error.localizedDescription)"
+                "Network error: \(error.localizedDescription)"
             case let .decodingError(error):
-                return "Failed to decode response: \(error.localizedDescription)"
+                "Failed to decode response: \(error.localizedDescription)"
             case let .apiError(message):
-                return "API error: \(message)"
+                "API error: \(message)"
             case .missingAPIKey:
-                return "Yelp API key is missing"
+                "Yelp API key is missing"
             case .rateLimitExceeded:
-                return "Rate limit exceeded. Please try again later."
+                "Rate limit exceeded. Please try again later."
             case .maxRetriesExceeded:
-                return "Maximum retry attempts exceeded"
+                "Maximum retry attempts exceeded"
             }
         }
     }
@@ -325,16 +325,14 @@ private struct YelpBusiness: Codable {
         .joined(separator: " ")
         + ", \(location.city), \(location.state) \(location.zipCode)"
 
-        let priceRange: PriceRange
-        if let price = price {
-            priceRange = PriceRange(rawValue: price.count) ?? .medium
+        let priceRange: PriceRange = if let price {
+            PriceRange(rawValue: price.count) ?? .medium
         } else {
-            priceRange = .medium
+            .medium
         }
 
-        let openingHours: [Restaurant.OpeningHours]
-        if let businessHours = hours?.first?.open {
-            openingHours = businessHours.map { period in
+        let openingHours: [Restaurant.OpeningHours] = if let businessHours = hours?.first?.open {
+            businessHours.map { period in
                 Restaurant.OpeningHours(
                     day: period.day,
                     start: period.start,
@@ -343,7 +341,7 @@ private struct YelpBusiness: Codable {
                 )
             }
         } else {
-            openingHours = []
+            []
         }
 
         return Restaurant(

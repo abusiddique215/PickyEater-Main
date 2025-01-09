@@ -40,7 +40,7 @@ struct SearchView: View {
                     if isSearching {
                         ProgressView()
                             .tint(colors.primary)
-                    } else if let error = error {
+                    } else if let error {
                         ErrorView(error: error) {
                             Task {
                                 await loadSearchResults()

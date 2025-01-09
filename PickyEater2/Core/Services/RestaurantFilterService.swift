@@ -76,7 +76,7 @@ actor RestaurantFilterService {
 
     func sortRestaurantsByPreference(_ restaurants: [Restaurant], preferences: UserPreferences) async -> [Restaurant] {
         // Sort in parallel using Task groups for large datasets
-        return await withTaskGroup(of: [(Restaurant, Double)].self) { group in
+        await withTaskGroup(of: [(Restaurant, Double)].self) { group in
             let chunks = restaurants.chunked(into: max(1, restaurants.count / ProcessInfo.processInfo.processorCount))
 
             for chunk in chunks {
@@ -94,7 +94,7 @@ actor RestaurantFilterService {
 
             return scoredRestaurants
                 .sorted { $0.1 > $1.1 }
-                .map { $0.0 }
+                .map(\.0)
         }
     }
 
@@ -125,7 +125,7 @@ actor RestaurantFilterService {
         // Dietary restrictions check (using Set operations for better performance)
         if !preferences.dietaryRestrictions.isEmpty {
             let restaurantCategories = Set(restaurant.categories.map { $0.lowercased() })
-            let requiredCategories = Set(preferences.dietaryRestrictions.map { $0.rawValue })
+            let requiredCategories = Set(preferences.dietaryRestrictions.map(\.rawValue))
             if !requiredCategories.isSubset(of: restaurantCategories) {
                 return false
             }

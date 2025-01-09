@@ -54,7 +54,7 @@ struct RestaurantCallout: View {
                 .font(.headline)
 
             if !restaurant.categories.isEmpty {
-                Text(restaurant.categories.map { $0.title }.joined(separator: " • "))
+                Text(restaurant.categories.map(\.title).joined(separator: " • "))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
