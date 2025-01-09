@@ -18,10 +18,12 @@ struct UserPreferences: Codable, Identifiable {
     // Additional initializers and methods if necessary
 
     func filterRestaurants(_ restaurants: [AppRestaurant]) -> [AppRestaurant] {
-        // Filtering logic...
+        return restaurants.filter { $0.dietaryRestrictions.isSubset(of: dietaryRestrictions) }
     }
 
     func filterByCategories(_ restaurants: [AppRestaurant], preferredCategories: [String]) -> [AppRestaurant] {
-        // Filtering logic...
+        return restaurants.filter { restaurant in
+            !Set(restaurant.categories.map(\.title)).intersection(preferredCategories).isEmpty
+        }
     }
 }
