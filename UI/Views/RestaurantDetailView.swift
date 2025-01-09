@@ -3,12 +3,12 @@ import SwiftUI
 struct RestaurantDetailView: View {
     let restaurant: AppRestaurant
     let yelpService: YelpAPIService
-    let imageURL: URL?
+    @State private var imageURL: URL? = nil
 
     init(restaurant: AppRestaurant, yelpService: YelpAPIService) {
         self.restaurant = restaurant
         self.yelpService = yelpService
-        imageURL = nil
+        // Initialize imageURL if needed
     }
 
     var body: some View {

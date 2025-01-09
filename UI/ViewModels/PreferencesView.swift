@@ -1,7 +1,5 @@
 import SwiftUI
-
-// Import CoreModels if DietaryRestriction is in another module
-// import CoreModels
+import Core
 
 struct PreferencesView: View {
     @EnvironmentObject var preferencesManager: PreferencesManager

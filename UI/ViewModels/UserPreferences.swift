@@ -1,13 +1,1 @@
-struct UserPreferences: Codable, Identifiable {
-    // Existing properties...
-
-    func filterRestaurants(_ restaurants: [AppRestaurant]) -> [AppRestaurant] {
-        restaurants.filter { $0.dietaryRestrictions.isSubset(of: dietaryRestrictions) }
-    }
-
-    func filterByCategories(_ restaurants: [AppRestaurant], preferredCategories: [String]) -> [AppRestaurant] {
-        restaurants.filter { restaurant in
-            !Set(restaurant.categories.map(\.title)).intersection(preferredCategories).isEmpty
-        }
-    }
-}
+// REMOVE the entire UserPreferences struct as it's already defined in Core/Models/UserPreferences.swift

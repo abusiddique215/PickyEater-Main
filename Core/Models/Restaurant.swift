@@ -6,14 +6,34 @@ enum PriceRange: String, Codable {
     case threeDollars = "$$$"
     case fourDollars = "$$$$"
     case other = "Other"
+
+    init(from value: String) {
+        switch value {
+        case "$":
+            self = .oneDollar
+        case "$$":
+            self = .twoDollars
+        case "$$$":
+            self = .threeDollars
+        case "$$$$":
+            self = .fourDollars
+        default:
+            self = .other
+        }
+    }
+
+    var rawValueString: String {
+        return self.rawValue
+    }
 }
 
 struct AppRestaurant: Codable, Identifiable, Equatable {
     let id: String
     let name: String
-    let price: PriceRange
+    let distance: Double?
+    let priceRange: PriceRange
     let categories: [Category]
-    // Add other necessary properties, ensuring all are Codable
+    let imageUrl: String
 
     // Implement Equatable
     static func == (lhs: AppRestaurant, rhs: AppRestaurant) -> Bool {

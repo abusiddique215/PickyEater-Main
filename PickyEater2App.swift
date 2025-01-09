@@ -7,7 +7,7 @@ struct PickyEater2App: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
                 .environmentObject(authService)
                 .environmentObject(preferencesManager)
         }
