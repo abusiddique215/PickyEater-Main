@@ -7,5 +7,5 @@ class AuthenticationService: ObservableObject {
         // Private initializer to enforce singleton
     }
 
-    // Authentication methods and properties...
+    // Authentication methods...
 }

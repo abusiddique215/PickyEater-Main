@@ -1,84 +1,42 @@
 import SwiftUI
 
 struct RestaurantRowView: View {
-    let restaurant: Restaurant
+    let restaurant: AppRestaurant
+    let imageURL: URL?
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Restaurant Image
-            if let imageURL = restaurant.imageURL {
-                AsyncImage(url: imageURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
+        HStack {
+            if let url = imageURL {
+                // Load image asynchronously
+                AsyncImage(url: url) { image in
+                    image.resizable()
                 } placeholder: {
-                    Color(.systemGray5)
+                    Image(systemName: "photo")
+                        .resizable()
+                        .frame(width: 50, height: 50)
                 }
-                .frame(width: 80, height: 80)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .frame(width: 50, height: 50)
             } else {
-                Image(systemName: "fork.knife.circle.fill")
-                    .font(.system(size: 40))
-                    .foregroundColor(.secondary)
-                    .frame(width: 80, height: 80)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                Image(systemName: "photo")
+                    .resizable()
+                    .frame(width: 50, height: 50)
             }
-
-            // Restaurant Info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(restaurant.name)
-                    .font(.headline)
-
-                Text(restaurant.cuisineType)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-
-                HStack(spacing: 8) {
-                    // Rating
-                    HStack(spacing: 4) {
-                        Image(systemName: "star.fill")
-                            .font(.caption)
-                            .foregroundColor(.yellow)
-
-                        Text(String(format: "%.1f", restaurant.rating))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-
-                    // Price Level
-                    Text(restaurant.priceLevel)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-
-            Spacer()
-
-            // Chevron
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            Text(restaurant.name)
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
-        )
     }
 }
 
 #Preview {
     RestaurantRowView(
-        restaurant: Restaurant(
+        restaurant: AppRestaurant(
             id: "1",
             name: "Sample Restaurant",
             cuisineType: "Italian",
             rating: 4.5,
             priceLevel: "$$$",
             imageURL: nil
-        )
+        ),
+        imageURL: nil
     )
     .padding()
     .background(Color(.systemGroupedBackground))
