@@ -8,7 +8,7 @@ struct RestaurantDetailView: View {
     init(restaurant: AppRestaurant, yelpService: YelpAPIService) {
         self.restaurant = restaurant
         self.yelpService = yelpService
-        self.imageURL = nil
+        imageURL = nil
     }
 
     var body: some View {
