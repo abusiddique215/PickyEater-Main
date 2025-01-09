@@ -23,4 +23,4 @@ private struct HomeErrorView: View {
         }
         .padding()
     }
-}
+} 

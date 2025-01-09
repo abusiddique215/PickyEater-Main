@@ -7,6 +7,6 @@ enum DietaryRestriction: String, CaseIterable, Codable, Identifiable {
     case dairyFree = "Dairy-Free"
     case nutFree = "Nut-Free"
     // Add other restrictions as needed
-    
-    var id: String { self.rawValue }
-} 
+
+    var id: String { rawValue }
+}

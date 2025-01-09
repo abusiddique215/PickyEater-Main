@@ -2,12 +2,8 @@ import Foundation
 
 class PreferencesManager: ObservableObject {
     static let shared = PreferencesManager()
-    
-    private init() {
-        // Initialization logic...
-    }
-    
-    @Published var userPreferences: UserPreferences = UserPreferences(
+
+    @Published var userPreferences: UserPreferences = .init(
         id: UUID(),
         dietaryRestrictions: [],
         favoriteCuisines: [],
@@ -16,10 +12,24 @@ class PreferencesManager: ObservableObject {
         isSubscribed: false,
         sortBy: .name
     )
-    
-    func save() {
-        // Save logic...
+
+    private init() {
+        loadPreferences()
     }
-    
-    // Other preferences management methods...
-} 
+
+    func loadPreferences() {
+        if let data = UserDefaults.standard.data(forKey: "UserPreferences"),
+           let decoded = try? JSONDecoder().decode(UserPreferences.self, from: data)
+        {
+            userPreferences = decoded
+        }
+    }
+
+    func save() {
+        if let data = try? JSONEncoder().encode(userPreferences) {
+            UserDefaults.standard.set(data, forKey: "UserPreferences")
+        }
+    }
+
+    // Other methods...
+}

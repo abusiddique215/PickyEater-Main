@@ -12,16 +12,51 @@ extension AppRestaurant {
         let open: [OpeningHours]
         let hoursType: String
         let isOpenNow: Bool
-        
+
         enum CodingKeys: String, CodingKey {
             case open
             case hoursType = "hours_type"
             case isOpenNow = "is_open_now"
         }
     }
-    
-    // Update toRestaurant to include opening hours
+
+    // Update toAppRestaurant to include opening hours
     func toAppRestaurant(from data: [String: Any]) -> AppRestaurant {
         // Parsing logic...
     }
-} 
+}
+
+class YelpAPIService {
+    // Existing methods...
+
+    func fetchNearbyRestaurants() async throws -> [AppRestaurant] {
+        // Example fetch logic...
+        
+        // Example of handling price range
+        let price = data["price"] as? String ?? "Other"
+        let priceRange = parsePriceRange(from: price)
+        
+        // Replace `.medium` with `.other`
+        let priceLevel = PriceRange(rawValue: price) ?? .other
+        
+        // Use priceLevel accordingly
+        // e.g., assign to `price` property of AppRestaurant
+    }
+    
+    func parsePriceRange(from price: String) -> PriceRange {
+        switch price {
+        case "$":
+            return .oneDollar
+        case "$$":
+            return .twoDollars
+        case "$$$":
+            return .threeDollars
+        case "$$$$":
+            return .fourDollars
+        default:
+            return .other
+        }
+    }
+    
+    // Other methods...
+}

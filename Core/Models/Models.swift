@@ -7,4 +7,9 @@ struct Category: Codable, Equatable {
 }
 
 // Remove all references to Restaurant or AppRestaurant
-// Ensure no 'AppRestaurant' or 'Restaurant' structs are defined here 
+// Ensure no 'AppRestaurant' or 'Restaurant' structs are defined here
+
+struct RestaurantSearchResponse: Codable {
+    let businesses: [AppRestaurant]
+    // Other properties...
+}

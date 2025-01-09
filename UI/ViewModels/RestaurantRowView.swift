@@ -8,6 +8,14 @@ struct RestaurantRowView: View {
         HStack {
             if let url = imageURL {
                 // Load image
+                AsyncImage(url: url) { image in
+                    image.resizable()
+                } placeholder: {
+                    Image(systemName: "photo")
+                        .resizable()
+                        .frame(width: 50, height: 50)
+                }
+                .frame(width: 50, height: 50)
             } else {
                 // Placeholder image
                 Image(systemName: "photo")
@@ -15,6 +23,7 @@ struct RestaurantRowView: View {
                     .frame(width: 50, height: 50)
             }
             // Other UI components...
+            Text(restaurant.name)
         }
     }
-}
+} 

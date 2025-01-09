@@ -5,4 +5,4 @@ struct User: Codable, Identifiable {
     let name: String
     let email: String
     // Additional user properties...
-} 
+}
