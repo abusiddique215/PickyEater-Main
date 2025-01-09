@@ -46,15 +46,15 @@ class YelpAPIService {
     func parsePriceRange(from price: String) -> PriceRange {
         switch price {
         case "$":
-            return .oneDollar
+            .oneDollar
         case "$$":
-            return .twoDollars
+            .twoDollars
         case "$$$":
-            return .threeDollars
+            .threeDollars
         case "$$$$":
-            return .fourDollars
+            .fourDollars
         default:
-            return .other
+            .other
         }
     }
 
