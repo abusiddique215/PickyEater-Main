@@ -1,5 +1,5 @@
-import SwiftUI
 import Core
+import SwiftUI
 
 struct PreferencesView: View {
     @EnvironmentObject var preferencesManager: PreferencesManager

@@ -23,7 +23,7 @@ enum PriceRange: String, Codable {
     }
 
     var rawValueString: String {
-        return self.rawValue
+        rawValue
     }
 }
 
