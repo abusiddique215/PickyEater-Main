@@ -16,4 +16,12 @@ struct UserPreferences: Codable, Identifiable {
     }
     
     // Additional initializers and methods if necessary
+    
+    func filterRestaurants(_ restaurants: [AppRestaurant]) -> [AppRestaurant] {
+        // Filtering logic...
+    }
+    
+    func filterByCategories(_ restaurants: [AppRestaurant], preferredCategories: [String]) -> [AppRestaurant] {
+        // Filtering logic...
+    }
 } 

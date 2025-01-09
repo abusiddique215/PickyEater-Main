@@ -3,9 +3,23 @@ import Foundation
 class PreferencesManager: ObservableObject {
     static let shared = PreferencesManager()
     
-    init() {
+    private init() {
         // Initialization logic...
     }
     
-    // Preferences management methods and properties...
+    @Published var userPreferences: UserPreferences = UserPreferences(
+        id: UUID(),
+        dietaryRestrictions: [],
+        favoriteCuisines: [],
+        cravings: "",
+        location: "",
+        isSubscribed: false,
+        sortBy: .name
+    )
+    
+    func save() {
+        // Save logic...
+    }
+    
+    // Other preferences management methods...
 } 

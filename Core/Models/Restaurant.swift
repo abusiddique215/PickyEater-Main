@@ -13,7 +13,7 @@ struct AppRestaurant: Codable, Identifiable, Equatable {
     let name: String
     let price: PriceRange
     let categories: [Category]
-    // other properties...
+    // Add other necessary properties, ensuring all are Codable
     
     // Implement Equatable
     static func == (lhs: AppRestaurant, rhs: AppRestaurant) -> Bool {
