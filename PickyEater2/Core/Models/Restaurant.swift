@@ -1,56 +1,57 @@
 import Foundation
 
-enum PriceRange: Int, Codable {
-    case $, $$, $$$, $$$$, Other
+public enum PriceRange: String, Codable {
+    case oneDollar = "$"
+    case twoDollars = "$$"
+    case threeDollars = "$$$"
+    case fourDollars = "$$$$"
+    case other = "Other"
 
-    init(from value: String) {
+    public init(from value: String) {
         switch value {
         case "$":
-            self = .$
+            self = .oneDollar
         case "$$":
-            self = $$
+            self = .twoDollars
         case "$$$":
-            self = $$$
+            self = .threeDollars
         case "$$$$":
-            self = $$$$
+            self = .fourDollars
         default:
-            self = .Other
+            self = .other
         }
     }
 
-    var rawValueString: String {
-        switch self {
-        case .$:
-            "$"
-        case $$:
-            "$$"
-        case $$$:
-            "$$$"
-        case $$$$:
-            "$$$$"
-        case .Other:
-            "Other"
-        }
+    public var rawValueString: String {
+        rawValue
     }
 }
 
-struct Category: Codable, Hashable {
-    let alias: String
-    let title: String
-}
+public struct AppRestaurant: Codable, Identifiable, Equatable {
+    public let id: String
+    public let name: String
+    public let distance: Double?
+    public let priceRange: PriceRange
+    public let categories: [Category]
+    public let imageUrl: String
 
-struct Restaurant: Codable, Identifiable {
-    let id: String
-    let name: String
-    let distance: Double?
-    let price: String?
-    let categories: [Category]
-    let imageUrl: String
+    public init(
+        id: String,
+        name: String,
+        distance: Double?,
+        priceRange: PriceRange,
+        categories: [Category],
+        imageUrl: String
+    ) {
+        self.id = id
+        self.name = name
+        self.distance = distance
+        self.priceRange = priceRange
+        self.categories = categories
+        self.imageUrl = imageUrl
+    }
 
-    var priceRange: PriceRange {
-        if let price {
-            return PriceRange(from: price)
-        }
-        return .Other
+    public static func == (lhs: AppRestaurant, rhs: AppRestaurant) -> Bool {
+        lhs.id == rhs.id
     }
 }
