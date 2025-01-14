@@ -138,7 +138,7 @@ private struct RestaurantCard: View {
             }
             .padding(.horizontal, 8)
         }
-        .background(Color(.systemBackground))
+        .background(Color(UIColor.systemBackground))
         .cornerRadius(12)
         .shadow(radius: 4)
     }
