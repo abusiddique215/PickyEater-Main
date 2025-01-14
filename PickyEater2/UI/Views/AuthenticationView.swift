@@ -2,7 +2,8 @@ import SwiftUI
 import AuthenticationServices
 
 struct AuthenticationView: View {
-    @StateObject private var authService = AuthenticationService()
+    @StateObject private var authService = AuthenticationService.shared
+    @StateObject private var biometricAuth = BiometricAuthenticationService()
     @State private var showError = false
     @State private var errorMessage = ""
     @Environment(\.colorScheme) private var colorScheme
@@ -46,8 +47,14 @@ struct AuthenticationView: View {
                     } onCompletion: { result in
                         Task {
                             do {
-                                // Handle sign in completion
-                                showError = false
+                                switch result {
+                                case .success(let authorization):
+                                    // Handle successful authorization
+                                    authService.isAuthenticated = true
+                                    showError = false
+                                case .failure(let error):
+                                    throw error
+                                }
                             } catch {
                                 showError = true
                                 errorMessage = error.localizedDescription
@@ -56,9 +63,39 @@ struct AuthenticationView: View {
                     }
                     .frame(height: 44)
 
+                    // Continue with Biometrics (if available)
+                    if biometricAuth.biometricType != "None" {
+                        Button {
+                            Task {
+                                do {
+                                    try await biometricAuth.authenticate()
+                                    if biometricAuth.isAuthenticated {
+                                        authService.isAuthenticated = true
+                                    }
+                                } catch {
+                                    showError = true
+                                    errorMessage = error.localizedDescription
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: biometricAuth.biometricType == "Face ID" ? "faceid" : "touchid")
+                                Text("Continue with \(biometricAuth.biometricType)")
+                            }
+                            .font(.system(.body, design: .rounded))
+                            .foregroundColor(colors.text)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(colors.secondary, lineWidth: 1)
+                            )
+                        }
+                    }
+
                     // Continue as Guest
                     Button {
-                        // Handle guest sign in
+                        authService.isAuthenticated = true
                     } label: {
                         Text("Continue as Guest")
                             .font(.system(.body, design: .rounded))
