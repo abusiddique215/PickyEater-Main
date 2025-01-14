@@ -206,6 +206,6 @@ private struct EmptyStateView: View {
     HomeView(
         yelpService: YelpAPIService(),
         locationManager: LocationManager(),
-        filterService: RestaurantFilterService(preferencesManager: PreferencesManager())
+        filterService: RestaurantFilterService(preferencesManager: PreferencesManager.shared)
     )
 }

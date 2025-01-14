@@ -6,12 +6,15 @@ struct RestaurantMapView: View {
     let restaurants: [AppRestaurant]
     let centerCoordinate: CLLocationCoordinate2D
     @State private var selectedRestaurant: AppRestaurant?
+    @State private var region: MKCoordinateRegion
     
-    private var region: MKCoordinateRegion {
-        MKCoordinateRegion(
+    init(restaurants: [AppRestaurant], centerCoordinate: CLLocationCoordinate2D) {
+        self.restaurants = restaurants
+        self.centerCoordinate = centerCoordinate
+        _region = State(initialValue: MKCoordinateRegion(
             center: centerCoordinate,
             span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-        )
+        ))
     }
     
     var body: some View {
@@ -67,7 +70,7 @@ struct RestaurantCallout: View {
         priceRange: .twoDollars,
         categories: [Category(alias: "italian", title: "Italian")],
         imageUrl: "",
-        coordinates: Coordinates(latitude: 37.7749, longitude: -122.4194),
+        coordinates: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
         location: Location(address1: "123 Main St", city: "San Francisco", state: "CA", zipCode: "94105")
     )
     
