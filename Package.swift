@@ -10,10 +10,13 @@ let package = Package(
     products: [
         .library(
             name: "PickyEater2",
-            targets: ["PickyEater2Core", "PickyEater2UI"]
+            targets: ["PickyEater2UI"]
         ),
     ],
     dependencies: [
+        // Local Core Package
+        .package(path: "PickyEater2/Core"),
+        
         // Networking
         .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.8.1"),
 
@@ -24,20 +27,11 @@ let package = Package(
         .package(url: "https://github.com/RevenueCat/purchases-ios.git", from: "4.31.6"),
     ],
     targets: [
-        // Core Layer
-        .target(
-            name: "PickyEater2Core",
-            dependencies: [
-                "Alamofire",
-            ],
-            path: "PickyEater2/Core"
-        ),
-
         // UI Layer
         .target(
             name: "PickyEater2UI",
             dependencies: [
-                "PickyEater2Core",
+                .product(name: "PickyEater2Core", package: "Core"),
                 "Kingfisher",
             ],
             path: "PickyEater2/UI"
@@ -47,7 +41,7 @@ let package = Package(
         .target(
             name: "PickyEater2Infrastructure",
             dependencies: [
-                "PickyEater2Core",
+                .product(name: "PickyEater2Core", package: "Core"),
             ],
             path: "PickyEater2/Infrastructure"
         ),
@@ -56,7 +50,7 @@ let package = Package(
         .target(
             name: "PickyEater2Features",
             dependencies: [
-                "PickyEater2Core",
+                .product(name: "PickyEater2Core", package: "Core"),
                 "PickyEater2UI",
                 "RevenueCat",
             ],
@@ -67,7 +61,7 @@ let package = Package(
         .target(
             name: "PickyEater2",
             dependencies: [
-                "PickyEater2Core",
+                .product(name: "PickyEater2Core", package: "Core"),
                 "PickyEater2UI",
                 "PickyEater2Infrastructure",
                 "PickyEater2Features",
