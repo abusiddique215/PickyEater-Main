@@ -1,31 +1,32 @@
 import Foundation
 import CoreLocation
 
-struct Restaurant: Model {
+struct Restaurant: Identifiable, Codable, ModelIdentifiable {
     let id: String
     let name: String
-    let cuisineType: Cuisine
-    let dietaryOptions: Set<DietaryRestriction>
-    let rating: Double
-    let priceLevel: String // "$", "$$", "$$$", "$$$$"
-    let location: CLLocation
     let address: String
-    let imageURL: URL?
-    let distance: Double?
-    let isOpen: Bool
+    let latitude: Double
+    let longitude: Double
     let phoneNumber: String?
+    let websiteURL: URL?
+    let rating: Double
+    let reviewCount: Int
+    let priceRange: PriceRange?
+    let cuisineTypes: [CuisineType]
+    let dietaryOptions: [DietaryRestriction]
+    let imageURLs: [URL]
+    let hours: [String: String]
+    let isOpen: Bool
     
-    // Affiliate links
-    let uberEatsURL: URL?
-    let doorDashURL: URL?
-    let grubHubURL: URL?
-    
-    // Hashable conformance
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
     
-    static func == (lhs: Restaurant, rhs: Restaurant) -> Bool {
-        lhs.id == rhs.id
+    var formattedRating: String {
+        String(format: "%.1f", rating)
+    }
+    
+    var formattedReviewCount: String {
+        "\(reviewCount) reviews"
     }
 } 
