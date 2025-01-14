@@ -1,5 +1,1 @@
 --swiftversion 5.0
---indent 4
---trimwhitespace always
---stripunusedargs closure-only
---ifdef no-indent
