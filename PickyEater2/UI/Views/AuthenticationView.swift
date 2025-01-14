@@ -1,6 +1,5 @@
 import SwiftUI
 import AuthenticationServices
-import PickyEater2Core
 
 struct AuthenticationView: View {
     @StateObject private var authService = AuthenticationService()
