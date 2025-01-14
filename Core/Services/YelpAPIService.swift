@@ -23,7 +23,7 @@ extension AppRestaurant {
 
 class YelpAPIService {
     private let apiKey: String
-    
+
     init(apiKey: String = "") {
         self.apiKey = apiKey
     }
@@ -31,7 +31,7 @@ class YelpAPIService {
     func fetchNearbyRestaurants() async throws -> [AppRestaurant] {
         // This is a placeholder implementation
         // In a real app, you would make an actual API call to Yelp
-        return []
+        []
     }
 
     private func parsePriceRange(from price: String) -> PriceRange {

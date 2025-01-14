@@ -39,6 +39,4 @@ struct AppRestaurant: Codable, Identifiable, Equatable {
     static func == (lhs: AppRestaurant, rhs: AppRestaurant) -> Bool {
         lhs.id == rhs.id
     }
-
-    // Codable conformance is automatic unless custom decoding is needed
 }

@@ -1,6 +1,6 @@
 import Foundation
 
 struct Category: Codable, Equatable {
-    let id: String
+    let alias: String
     let title: String
 }
