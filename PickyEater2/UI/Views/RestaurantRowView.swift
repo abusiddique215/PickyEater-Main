@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct RestaurantRowView: View {
     let restaurant: AppRestaurant
@@ -36,7 +37,7 @@ struct RestaurantRowView: View {
             categories: [Category(alias: "italian", title: "Italian")],
             imageUrl: ""
         ),
-        imageURL: nil
+        imageURL: nil as URL?
     )
     .padding()
     .background(Color(.systemGroupedBackground))
