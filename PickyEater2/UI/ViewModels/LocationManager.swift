@@ -2,120 +2,75 @@ import CoreLocation
 import SwiftUI
 
 @MainActor
-class LocationManager: NSObject, ObservableObject {
-    @Published var currentLocation: CLLocation?
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
-    @Published var lastKnownAddress: String?
+final class LocationManager: NSObject, ObservableObject {
+    private let manager = CLLocationManager()
+    
+    @Published var location: CLLocation?
+    @Published var authorizationStatus: CLAuthorizationStatus
     @Published var error: Error?
-
-    private let locationManager = CLLocationManager()
-    private let geocoder = CLGeocoder()
-
+    
     override init() {
+        authorizationStatus = .notDetermined
         super.init()
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        locationManager.distanceFilter = 100 // meters
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.distanceFilter = 10
     }
-
-    func requestLocationPermission() {
-        locationManager.requestWhenInUseAuthorization()
+    
+    func requestAuthorization() {
+        manager.requestWhenInUseAuthorization()
     }
-
+    
     func startUpdatingLocation() {
-        locationManager.startUpdatingLocation()
+        manager.startUpdatingLocation()
     }
-
+    
     func stopUpdatingLocation() {
-        locationManager.stopUpdatingLocation()
-    }
-
-    private func updateAddress(for location: CLLocation) {
-        Task {
-            do {
-                let placemarks = try await geocoder.reverseGeocodeLocation(location)
-                if let placemark = placemarks.first {
-                    var addressComponents: [String] = []
-
-                    if let thoroughfare = placemark.thoroughfare {
-                        addressComponents.append(thoroughfare)
-                    }
-
-                    if let locality = placemark.locality {
-                        addressComponents.append(locality)
-                    }
-
-                    lastKnownAddress = addressComponents.joined(separator: ", ")
-                }
-            } catch {
-                self.error = error
-            }
-        }
+        manager.stopUpdatingLocation()
     }
 }
 
 // MARK: - CLLocationManagerDelegate
 
 extension LocationManager: CLLocationManagerDelegate {
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        authorizationStatus = manager.authorizationStatus
-
-        switch manager.authorizationStatus {
-        case .authorizedWhenInUse, .authorizedAlways:
-            startUpdatingLocation()
-        case .denied, .restricted:
-            error = LocationError.permissionDenied
-            stopUpdatingLocation()
-        case .notDetermined:
-            break
-        @unknown default:
-            break
-        }
-    }
-
-    func locationManager(_: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
-
-        // Filter out old or invalid locations
-        let howRecent = location.timestamp.timeIntervalSinceNow
-        guard abs(howRecent) < 15,
-              location.horizontalAccuracy >= 0,
-              location.horizontalAccuracy < 100 else { return }
-
-        currentLocation = location
-        updateAddress(for: location)
-    }
-
-    func locationManager(_: CLLocationManager, didFailWithError error: Error) {
-        if let error = error as? CLError {
-            switch error.code {
-            case .denied:
-                self.error = LocationError.permissionDenied
-            case .locationUnknown:
-                self.error = LocationError.locationUnavailable
-            default:
-                self.error = error
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor in
+            authorizationStatus = manager.authorizationStatus
+            
+            switch manager.authorizationStatus {
+            case .authorizedWhenInUse, .authorizedAlways:
+                manager.startUpdatingLocation()
+            case .denied, .restricted:
+                error = CLError(.denied)
+                location = nil
+            case .notDetermined:
+                manager.requestWhenInUseAuthorization()
+            @unknown default:
+                break
             }
-        } else {
-            self.error = error
         }
-
-        stopUpdatingLocation()
     }
-}
-
-// MARK: - Location Error
-
-enum LocationError: LocalizedError {
-    case permissionDenied
-    case locationUnavailable
-
-    var errorDescription: String? {
-        switch self {
-        case .permissionDenied:
-            "Location access was denied. Please enable location services in Settings to find restaurants near you."
-        case .locationUnavailable:
-            "Unable to determine your location. Please try again later."
+    
+    nonisolated func locationManager(_: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        Task { @MainActor in
+            guard let location = locations.last else { return }
+            self.location = location
+        }
+    }
+    
+    nonisolated func locationManager(_: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in
+            if let error = error as? CLError {
+                switch error.code {
+                case .denied:
+                    self.error = error
+                    location = nil
+                case .locationUnknown:
+                    self.error = error
+                default:
+                    self.error = error
+                }
+            }
         }
     }
 }
