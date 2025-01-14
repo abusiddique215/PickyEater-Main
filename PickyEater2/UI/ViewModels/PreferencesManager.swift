@@ -1,17 +1,12 @@
+import SwiftUI
 import Foundation
+import PickyEater2Core
 
+@MainActor
 class PreferencesManager: ObservableObject {
     static let shared = PreferencesManager()
 
-    @Published var userPreferences: UserPreferences = .init(
-        id: UUID(),
-        dietaryRestrictions: [],
-        favoriteCuisines: [],
-        cravings: "",
-        location: "",
-        isSubscribed: false,
-        sortBy: .name
-    )
+    @Published var userPreferences: UserPreferences = UserPreferences()
 
     private init() {
         loadPreferences()
@@ -26,8 +21,8 @@ class PreferencesManager: ObservableObject {
     }
 
     func save() {
-        if let data = try? JSONEncoder().encode(userPreferences) {
-            UserDefaults.standard.set(data, forKey: "UserPreferences")
+        if let encoded = try? JSONEncoder().encode(userPreferences) {
+            UserDefaults.standard.set(encoded, forKey: "UserPreferences")
         }
     }
 }
