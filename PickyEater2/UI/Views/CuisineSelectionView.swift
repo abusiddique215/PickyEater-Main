@@ -1,5 +1,5 @@
-import SwiftUI
 import PickyEater2Core
+import SwiftUI
 
 struct CuisineSelectionView: View {
     @EnvironmentObject var preferencesManager: PreferencesManager

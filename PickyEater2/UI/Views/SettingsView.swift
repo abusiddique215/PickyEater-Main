@@ -1,13 +1,13 @@
-import SwiftUI
-import SwiftData
 import PickyEater2Core
+import SwiftData
+import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var preferences: [UserPreferences]
     @State private var selectedTheme: AppTheme = .system
-    @State private var currentPreferences: UserPreferences = UserPreferences()
-    
+    @State private var currentPreferences: UserPreferences = .init()
+
     private var cuisinePreferencesLink: some View {
         NavigationLink {
             CuisineSelectionView(preferences: $currentPreferences)
@@ -20,7 +20,7 @@ struct SettingsView: View {
             }
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -38,10 +38,10 @@ struct SettingsView: View {
                 } header: {
                     Text("Appearance")
                 }
-                
+
                 Section {
                     cuisinePreferencesLink
-                    
+
                     NavigationLink {
                         DietaryRestrictionsView(preferences: $currentPreferences)
                     } label: {
@@ -55,11 +55,11 @@ struct SettingsView: View {
                 } header: {
                     Text("Food Preferences")
                 }
-                
+
                 Section {
                     Toggle("Notifications", isOn: .constant(true))
                         .tint(.accentColor)
-                    
+
                     NavigationLink {
                         NotificationSettingsView()
                     } label: {
@@ -68,7 +68,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Notifications")
                 }
-                
+
                 Section {
                     Button(role: .destructive) {
                         // Handle sign out
@@ -83,7 +83,7 @@ struct SettingsView: View {
             }
         }
     }
-    
+
     private func loadPreferences() {
         if let existing = preferences.first {
             currentPreferences = existing

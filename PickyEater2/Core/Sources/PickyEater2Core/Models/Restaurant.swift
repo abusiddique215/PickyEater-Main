@@ -6,9 +6,9 @@ public enum PriceRange: String, Codable, CaseIterable {
     case threeDollars = "$$$"
     case fourDollars = "$$$$"
     case other = "Unknown"
-    
+
     public var description: String {
-        return self.rawValue
+        return rawValue
     }
 }
 
@@ -19,7 +19,7 @@ public struct AppRestaurant: Codable, Identifiable, Equatable {
     public let priceRange: PriceRange
     public let categories: [Category]
     public let imageUrl: String
-    
+
     public init(id: String, name: String, distance: Double, priceRange: PriceRange, categories: [Category], imageUrl: String) {
         self.id = id
         self.name = name
@@ -28,7 +28,7 @@ public struct AppRestaurant: Codable, Identifiable, Equatable {
         self.categories = categories
         self.imageUrl = imageUrl
     }
-    
+
     public static func == (lhs: AppRestaurant, rhs: AppRestaurant) -> Bool {
         lhs.id == rhs.id
     }

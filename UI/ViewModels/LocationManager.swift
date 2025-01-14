@@ -11,15 +11,15 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Setup location manager...
     }
 
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    func locationManager(_: CLLocationManager, didUpdateLocations _: [CLLocation]) {
         // Handle location updates...
     }
 
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+    func locationManager(_: CLLocationManager, didFailWithError _: Error) {
         // Handle errors...
     }
 
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+    func locationManagerDidChangeAuthorization(_: CLLocationManager) {
         // Handle authorization changes...
     }
 

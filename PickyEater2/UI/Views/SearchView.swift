@@ -1,6 +1,6 @@
-import SwiftUI
 import MapKit
 import PickyEater2Core
+import SwiftUI
 
 struct SearchView: View {
     @Environment(\.modelContext) private var modelContext
@@ -12,21 +12,21 @@ struct SearchView: View {
     @State private var restaurants: [AppRestaurant] = []
     @State private var error: Error?
     @State private var showError = false
-    
+
     private let searchDebouncer = Timer.publish(
         every: 0.5,
         on: .main,
         in: .common
     ).autoconnect()
-    
+
     private var currentPreferences: UserPreferences {
         preferences.first ?? UserPreferences()
     }
-    
+
     public init() {
         // Default initializer
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -82,16 +82,16 @@ struct SearchView: View {
             }
         }
     }
-    
+
     private func searchRestaurants() async {
         guard !searchText.isEmpty else {
             restaurants = []
             return
         }
-        
+
         isSearching = true
         defer { isSearching = false }
-        
+
         do {
             let results = try await YelpAPIService.shared.searchRestaurants(
                 near: searchText,

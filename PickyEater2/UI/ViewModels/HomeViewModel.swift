@@ -1,6 +1,6 @@
-import SwiftUI
 import Combine
 import PickyEater2Core
+import SwiftUI
 
 @MainActor
 class HomeViewModel: ObservableObject {

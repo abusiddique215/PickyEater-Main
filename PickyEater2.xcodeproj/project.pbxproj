@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		00241AB59CAFF20572BEC2CA /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2C7A687CE347107A4495EE /* Models.swift */; };
 		014353564CD3F656AD5B60DC /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C28A328730B714064B416616 /* CoreLocation.framework */; };
 		01A09A7EB99B488FD93D29AC /* NetworkError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75DB13B2FDD7ED71E2C64FA9 /* NetworkError.swift */; };
 		06025F46DA6642B587A81F38 /* backend.md in Resources */ = {isa = PBXBuildFile; fileRef = E0393F95484E71791F1EDD8C /* backend.md */; };
@@ -59,7 +58,6 @@
 		A4F1C0325F01BBCEFB5FEC28 /* third-party-libraries.md in Resources */ = {isa = PBXBuildFile; fileRef = 037F07D22C78D15C27BDE3F1 /* third-party-libraries.md */; };
 		A85031C47A80A9B98FCD2C3A /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBE05C90F4D936C2F878F32B /* Category.swift */; };
 		A9F7B54A821EF663ADA0978A /* code-documentation.md in Resources */ = {isa = PBXBuildFile; fileRef = 3A9A9FBE3B6421EA2FE180B6 /* code-documentation.md */; };
-		AB696172395D0A6F2387B0D7 /* AuthenticationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B37C43BE2E3079F39A787C /* AuthenticationService.swift */; };
 		AE00792638596038E3464D9E /* performance-optimization.md in Resources */ = {isa = PBXBuildFile; fileRef = 9AD44FC5005E7F20DF0A52D9 /* performance-optimization.md */; };
 		AF0EAF51D48290789328E010 /* AuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30D11D75F8AC05420C5F6A81 /* AuthenticationView.swift */; };
 		B1A53EF5F2B776DBFFF2300F /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC4B988784B7F702A30E04AB /* PreferencesView.swift */; };
@@ -116,7 +114,6 @@
 		27E5C95AE8CB304C4158DB57 /* UserPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferences.swift; sourceTree = "<group>"; };
 		3038BE543C7069CD3BA3442D /* LocationSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSelectionView.swift; sourceTree = "<group>"; };
 		30D11D75F8AC05420C5F6A81 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
-		33B37C43BE2E3079F39A787C /* AuthenticationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationService.swift; sourceTree = "<group>"; };
 		347964B5C217B0A6D274DBF0 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		356C68B96D300CA81144CE20 /* RestaurantDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestaurantDetailViewModel.swift; sourceTree = "<group>"; };
 		36344C524D67DDCB3C269411 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
@@ -145,7 +142,6 @@
 		7F8B1AA4F579FAD2A7CA8B3E /* PickyEater2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickyEater2App.swift; sourceTree = "<group>"; };
 		813D2FAF2EA45AF9DE513ACF /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		861F0D4201513D7061131C18 /* RestaurantService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestaurantService.swift; sourceTree = "<group>"; };
-		8B2C7A687CE347107A4495EE /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		8C55FD74BE57DD52FD7483C9 /* PreferencesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesManager.swift; sourceTree = "<group>"; };
 		8ECBAA65641BFA7338A2C5BD /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		90B6A8A691D81943D89ED4E4 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
@@ -371,7 +367,6 @@
 		8B0049A6E1F2200E25D9DB12 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				33B37C43BE2E3079F39A787C /* AuthenticationService.swift */,
 				347964B5C217B0A6D274DBF0 /* HomeViewModel.swift */,
 				61971A3E91F0EF03032F286B /* LocationManager.swift */,
 				AF96FB0CC7D7813AFF613872 /* NotificationManager.swift */,
@@ -487,7 +482,6 @@
 		F0AAF4C80BF05E719F785606 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				8B2C7A687CE347107A4495EE /* Models.swift */,
 				E3DFDB1DCDD3FCD538CCC27C /* Restaurant.swift */,
 				E9F6FA71B23ACECBF93CCCAF /* Review.swift */,
 				27E5C95AE8CB304C4158DB57 /* UserPreferences.swift */,
@@ -687,7 +681,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE274A230EA862FBBF502077 /* AppDelegate.swift in Sources */,
-				AB696172395D0A6F2387B0D7 /* AuthenticationService.swift in Sources */,
 				E5EA750662E31E8043BBD45A /* AuthenticationService.swift in Sources */,
 				AF0EAF51D48290789328E010 /* AuthenticationView.swift in Sources */,
 				A85031C47A80A9B98FCD2C3A /* Category.swift in Sources */,
@@ -704,7 +697,6 @@
 				D86836ED72BD5C0EEF0380C6 /* LocationManager.swift in Sources */,
 				7000ADCB0BC3F06AD6F66D0B /* LocationSelectionView.swift in Sources */,
 				C56C70561EAABA5BC3AECC6B /* MainTabView.swift in Sources */,
-				00241AB59CAFF20572BEC2CA /* Models.swift in Sources */,
 				5B88ED2F56F25CC4A296ECA7 /* Models.swift in Sources */,
 				01A09A7EB99B488FD93D29AC /* NetworkError.swift in Sources */,
 				1E89E482EFB166406A8DF700 /* NetworkMonitor.swift in Sources */,

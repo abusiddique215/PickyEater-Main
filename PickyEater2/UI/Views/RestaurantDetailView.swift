@@ -1,6 +1,6 @@
 import MapKit
-import SwiftUI
 import PickyEater2Core
+import SwiftUI
 
 struct RestaurantDetailView: View {
     @StateObject private var viewModel: RestaurantDetailViewModel

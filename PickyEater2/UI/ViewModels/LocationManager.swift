@@ -4,11 +4,11 @@ import SwiftUI
 @MainActor
 final class LocationManager: NSObject, ObservableObject {
     private let manager = CLLocationManager()
-    
+
     @Published var location: CLLocation?
     @Published var authorizationStatus: CLAuthorizationStatus
     @Published var error: Error?
-    
+
     override init() {
         authorizationStatus = .notDetermined
         super.init()
@@ -16,15 +16,15 @@ final class LocationManager: NSObject, ObservableObject {
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.distanceFilter = 10
     }
-    
+
     func requestAuthorization() {
         manager.requestWhenInUseAuthorization()
     }
-    
+
     func startUpdatingLocation() {
         manager.startUpdatingLocation()
     }
-    
+
     func stopUpdatingLocation() {
         manager.stopUpdatingLocation()
     }
@@ -36,7 +36,7 @@ extension LocationManager: CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in
             authorizationStatus = manager.authorizationStatus
-            
+
             switch manager.authorizationStatus {
             case .authorizedWhenInUse, .authorizedAlways:
                 manager.startUpdatingLocation()
@@ -50,14 +50,14 @@ extension LocationManager: CLLocationManagerDelegate {
             }
         }
     }
-    
+
     nonisolated func locationManager(_: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         Task { @MainActor in
             guard let location = locations.last else { return }
             self.location = location
         }
     }
-    
+
     nonisolated func locationManager(_: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in
             if let error = error as? CLError {

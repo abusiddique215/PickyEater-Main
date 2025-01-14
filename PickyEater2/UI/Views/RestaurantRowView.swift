@@ -1,9 +1,9 @@
-import SwiftUI
 import PickyEater2Core
+import SwiftUI
 
 struct RestaurantRowView: View {
     let restaurant: AppRestaurant
-    
+
     var body: some View {
         HStack(spacing: 12) {
             AsyncImage(url: URL(string: restaurant.imageUrl)) { image in
@@ -15,11 +15,11 @@ struct RestaurantRowView: View {
             }
             .frame(width: 60, height: 60)
             .clipShape(RoundedRectangle(cornerRadius: 8))
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(restaurant.name)
                     .font(.headline)
-                
+
                 HStack {
                     ForEach(restaurant.categories, id: \.alias) { category in
                         Text(category.title)
@@ -27,12 +27,12 @@ struct RestaurantRowView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                
+
                 HStack {
                     Text(String(format: "%.1f km", restaurant.distance))
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
+
                     Text(restaurant.priceRange.description)
                         .font(.caption)
                         .foregroundColor(.secondary)

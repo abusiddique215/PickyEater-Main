@@ -1,6 +1,6 @@
-import SwiftUI
 import MapKit
 import PickyEater2Core
+import SwiftUI
 
 struct RestaurantListView: View {
     @StateObject private var locationManager = LocationManager()
@@ -10,7 +10,7 @@ struct RestaurantListView: View {
     @State private var showError = false
     @State private var error: Error?
     @State private var showingMap = false
-    
+
     var body: some View {
         NavigationView {
             Group {
@@ -61,7 +61,7 @@ struct RestaurantListView: View {
             await loadRestaurants(forceRefresh: true)
         }
     }
-    
+
     private func loadRestaurants(forceRefresh: Bool = false) async {
         guard !isLoading else { return }
         guard let location = locationManager.location else {
@@ -69,10 +69,10 @@ struct RestaurantListView: View {
             showError = true
             return
         }
-        
+
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
             restaurants = try await YelpAPIService.shared.searchRestaurants(
                 near: location,
@@ -96,10 +96,10 @@ struct RestaurantListView: View {
 
 enum NetworkError: LocalizedError {
     case apiError(String)
-    
+
     var errorDescription: String? {
         switch self {
-        case .apiError(let message):
+        case let .apiError(message):
             return message
         }
     }

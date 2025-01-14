@@ -1,5 +1,5 @@
-import SwiftUI
 import AuthenticationServices
+import SwiftUI
 
 struct AuthenticationView: View {
     @StateObject private var authService = AuthenticationService.shared
@@ -49,9 +49,7 @@ struct AuthenticationView: View {
                             do {
                                 switch result {
                                 case .success(let authorization):
-                                    // Handle successful authorization
-                                    authService.isAuthenticated = true
-                                    showError = false
+                                    try await authService.signInWithApple(authorization: authorization)
                                 case .failure(let error):
                                     throw error
                                 }
@@ -70,7 +68,7 @@ struct AuthenticationView: View {
                                 do {
                                     try await biometricAuth.authenticate()
                                     if biometricAuth.isAuthenticated {
-                                        authService.isAuthenticated = true
+                                        authService.signInAsGuest()
                                     }
                                 } catch {
                                     showError = true
@@ -95,7 +93,7 @@ struct AuthenticationView: View {
 
                     // Continue as Guest
                     Button {
-                        authService.isAuthenticated = true
+                        authService.signInAsGuest()
                     } label: {
                         Text("Continue as Guest")
                             .font(.system(.body, design: .rounded))

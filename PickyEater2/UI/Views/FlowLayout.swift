@@ -3,13 +3,13 @@ import SwiftUI
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) -> CGSize {
         let rows = computeRows(proposal: proposal, subviews: subviews)
         let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(rows.count - 1)
         return CGSize(width: proposal.width ?? 0, height: height)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) {
         let rows = computeRows(proposal: proposal, subviews: subviews)
         var y = bounds.minY
 
@@ -73,4 +73,4 @@ struct FlowLayout: Layout {
             height = max(height, element.height)
         }
     }
-} 
+}

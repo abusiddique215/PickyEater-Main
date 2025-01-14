@@ -1,6 +1,6 @@
-import SwiftUI
 import MapKit
 import PickyEater2Core
+import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel

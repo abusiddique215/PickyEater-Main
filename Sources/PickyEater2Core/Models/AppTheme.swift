@@ -4,7 +4,7 @@ public enum AppTheme: String, CaseIterable {
     case light = "Light"
     case dark = "Dark"
     case system = "System"
-    
+
     public var colorScheme: ColorScheme? {
         switch self {
         case .light:
@@ -15,4 +15,4 @@ public enum AppTheme: String, CaseIterable {
             return nil
         }
     }
-} 
+}

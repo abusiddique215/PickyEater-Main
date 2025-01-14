@@ -1,6 +1,6 @@
 import CoreLocation
-import SwiftUI
 import PickyEater2Core
+import SwiftUI
 
 struct LocationSelectionView: View {
     @Binding var preferences: UserPreferences

@@ -16,22 +16,22 @@ public final class UserPreferences {
     @Attribute public var minimumRating: Double
     @Attribute public var maximumDistance: Double
     @Attribute public var cuisinePreferencesData: Data
-    
+
     public var dietaryRestrictions: Set<DietaryRestriction> {
         get { Set(dietaryRestrictionsArray.compactMap { DietaryRestriction(rawValue: $0) }) }
         set { dietaryRestrictionsArray = Array(newValue.map { $0.rawValue }) }
     }
-    
+
     public var favoriteCuisines: Set<String> {
         get { Set(favoriteCuisinesArray) }
         set { favoriteCuisinesArray = Array(newValue) }
     }
-    
+
     public var cravings: Set<String> {
         get { Set(cravingsArray) }
         set { cravingsArray = Array(newValue) }
     }
-    
+
     public var location: Location? {
         get {
             guard let lat = latitude, let lon = longitude else { return nil }
@@ -42,22 +42,22 @@ public final class UserPreferences {
             longitude = newValue?.longitude
         }
     }
-    
+
     public var sortBy: SortOption {
         get { SortOption(rawValue: sortByRawValue) ?? .bestMatch }
         set { sortByRawValue = newValue.rawValue }
     }
-    
+
     public var priceRange: Set<PriceRange> {
         get { Set(priceRangeArray.compactMap { PriceRange(rawValue: $0) }) }
         set { priceRangeArray = Array(newValue.map { $0.rawValue }) }
     }
-    
+
     public var cuisinePreferences: [String: Double] {
         get { (try? JSONDecoder().decode([String: Double].self, from: cuisinePreferencesData)) ?? [:] }
         set { cuisinePreferencesData = (try? JSONEncoder().encode(newValue)) ?? Data() }
     }
-    
+
     public init(
         id: String = UUID().uuidString,
         dietaryRestrictions: Set<DietaryRestriction> = [],
@@ -73,36 +73,36 @@ public final class UserPreferences {
         cuisinePreferences: [String: Double] = [:]
     ) {
         self.id = id
-        self.dietaryRestrictionsArray = Array(dietaryRestrictions.map { $0.rawValue })
-        self.favoriteCuisinesArray = Array(favoriteCuisines)
-        self.cravingsArray = Array(cravings)
-        self.latitude = location?.latitude
-        self.longitude = location?.longitude
+        dietaryRestrictionsArray = Array(dietaryRestrictions.map { $0.rawValue })
+        favoriteCuisinesArray = Array(favoriteCuisines)
+        cravingsArray = Array(cravings)
+        latitude = location?.latitude
+        longitude = location?.longitude
         self.isSubscribed = isSubscribed
-        self.sortByRawValue = sortBy.rawValue
+        sortByRawValue = sortBy.rawValue
         self.maxDistance = maxDistance
-        self.priceRangeArray = Array(priceRange.map { $0.rawValue })
+        priceRangeArray = Array(priceRange.map { $0.rawValue })
         self.minimumRating = minimumRating
         self.maximumDistance = maximumDistance
-        self.cuisinePreferencesData = (try? JSONEncoder().encode(cuisinePreferences)) ?? Data()
+        cuisinePreferencesData = (try? JSONEncoder().encode(cuisinePreferences)) ?? Data()
     }
-    
+
     public struct Location: Codable, Equatable {
         public let latitude: Double
         public let longitude: Double
-        
+
         public init(latitude: Double, longitude: Double) {
             self.latitude = latitude
             self.longitude = longitude
         }
     }
-    
+
     public enum SortOption: String, Codable, CaseIterable {
         case bestMatch = "best_match"
-        case rating = "rating"
+        case rating
         case reviewCount = "review_count"
-        case distance = "distance"
-        
+        case distance
+
         public var description: String {
             switch self {
             case .bestMatch:

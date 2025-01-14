@@ -1,6 +1,6 @@
-import SwiftUI
 import Foundation
 import PickyEater2Core
+import SwiftUI
 
 @MainActor
 class PreferencesViewModel: ObservableObject {
@@ -150,7 +150,8 @@ class PreferencesViewModel: ObservableObject {
 
     private func loadPreferences() {
         if let data = UserDefaults.standard.data(forKey: "UserPreferences"),
-           let decoded = try? JSONDecoder().decode(UserPreferences.self, from: data) {
+           let decoded = try? JSONDecoder().decode(UserPreferences.self, from: data)
+        {
             preferences = decoded
         }
     }
