@@ -30,6 +30,7 @@ struct ErrorView: View {
             }
         }
         .padding()
+        .background(Color(UIColor.systemBackground))
     }
 }
 
