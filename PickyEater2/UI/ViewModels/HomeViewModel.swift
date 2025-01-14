@@ -1,13 +1,13 @@
+import SwiftUI
 import Combine
-import CoreLocation
-import Foundation
+import PickyEater2Core
 
 @MainActor
 class HomeViewModel: ObservableObject {
-    @Published private(set) var restaurants: [Restaurant] = []
+    @Published private(set) var restaurants: [AppRestaurant] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: Error?
-    @Published var selectedRestaurant: Restaurant?
+    @Published var selectedRestaurant: AppRestaurant?
 
     private let yelpService: YelpAPIService
     private let locationManager: LocationManager
@@ -29,11 +29,10 @@ class HomeViewModel: ObservableObject {
 
     private func setupLocationUpdates() {
         locationManager.$location
-            .compactMap { $0 }
-            .removeDuplicates()
-            .sink { [weak self] _ in
+            .sink { [weak self] location in
+                guard let location = location else { return }
                 Task {
-                    await self?.fetchRestaurants()
+                    await self?.loadRestaurants(at: location)
                 }
             }
             .store(in: &cancellables)
@@ -43,47 +42,36 @@ class HomeViewModel: ObservableObject {
         NotificationCenter.default.publisher(for: UserPreferences.preferencesChangedNotification)
             .sink { [weak self] _ in
                 Task {
-                    await self?.fetchRestaurants()
+                    if let location = self?.locationManager.location {
+                        await self?.loadRestaurants(at: location)
+                    }
                 }
             }
             .store(in: &cancellables)
     }
 
-    func fetchRestaurants() async {
-        guard let location = locationManager.location else {
-            error = LocationError.locationNotAvailable
-            return
-        }
-
+    private func loadRestaurants(at location: CLLocation) async {
         isLoading = true
-        error = nil
+        defer { isLoading = false }
 
         do {
-            let preferences = UserDefaults.standard.userPreferences
+            let preferences = PreferencesManager.shared.userPreferences
             let fetchedRestaurants = try await yelpService.searchRestaurants(
                 location: location,
-                categories: Array(preferences.cuisinePreferences),
-                price: preferences.priceRange,
-                radius: Int(preferences.maximumDistance ?? 5000)
+                preferences: preferences,
+                radius: Int(preferences.maxDistance * 1000)
             )
 
-            // Filter and sort restaurants based on user preferences
             let filteredRestaurants = filterService.filterRestaurants(fetchedRestaurants, preferences: preferences)
             restaurants = filterService.sortRestaurantsByPreference(filteredRestaurants, preferences: preferences)
         } catch {
             self.error = error
             restaurants = []
         }
-
-        isLoading = false
-    }
-
-    func refreshRestaurants() async {
-        await fetchRestaurants()
     }
 
     func requestLocationPermission() {
-        locationManager.requestWhenInUseAuthorization()
+        locationManager.requestAuthorization()
     }
 }
 
