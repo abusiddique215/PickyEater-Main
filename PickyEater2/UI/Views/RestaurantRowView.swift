@@ -1,6 +1,6 @@
-import SwiftUI
 import Foundation
 import PickyEater2Core
+import SwiftUI
 
 struct RestaurantRowView: View {
     let restaurant: AppRestaurant

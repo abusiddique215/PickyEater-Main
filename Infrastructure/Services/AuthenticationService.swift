@@ -2,7 +2,7 @@ import Foundation
 
 class AuthenticationService: ObservableObject {
     static let shared = AuthenticationService()
-    
+
     @Published var isAuthenticated = false
     @Published var currentUser: User?
 

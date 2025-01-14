@@ -3,7 +3,7 @@ import Foundation
 class PreferencesManager: ObservableObject {
     static let shared = PreferencesManager()
 
-    @Published var userPreferences: UserPreferences = UserPreferences(
+    @Published var userPreferences: UserPreferences = .init(
         id: UUID(),
         dietaryRestrictions: [],
         favoriteCuisines: [],

@@ -10,6 +10,6 @@ enum DietaryRestriction: String, CaseIterable, Codable, Identifiable {
     case kosher = "Kosher"
 
     var id: String { rawValue }
-    
+
     var description: String { rawValue }
 }

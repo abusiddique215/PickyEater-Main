@@ -51,7 +51,7 @@ struct UserPreferences: Codable, Identifiable {
     }
 
     func filterRestaurants(_ restaurants: [AppRestaurant]) -> [AppRestaurant] {
-        restaurants.filter { restaurant in
+        restaurants.filter { _ in
             // Add your filtering logic here
             true // Placeholder
         }
