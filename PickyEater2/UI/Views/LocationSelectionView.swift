@@ -1,5 +1,6 @@
 import CoreLocation
 import SwiftUI
+import PickyEater2Core
 
 struct LocationSelectionView: View {
     @Binding var preferences: UserPreferences
@@ -85,4 +86,5 @@ struct LocationSelectionView: View {
     NavigationStack {
         LocationSelectionView(preferences: .constant(UserPreferences()))
     }
+    .modelContainer(for: UserPreferences.self, inMemory: true)
 }
