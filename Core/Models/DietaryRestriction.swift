@@ -6,7 +6,10 @@ enum DietaryRestriction: String, CaseIterable, Codable, Identifiable {
     case glutenFree = "Gluten-Free"
     case dairyFree = "Dairy-Free"
     case nutFree = "Nut-Free"
-    // add more if needed
+    case halal = "Halal"
+    case kosher = "Kosher"
 
     var id: String { rawValue }
+    
+    var description: String { rawValue }
 }
