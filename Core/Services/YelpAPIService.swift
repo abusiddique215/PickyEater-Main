@@ -19,44 +19,22 @@ extension AppRestaurant {
             case isOpenNow = "is_open_now"
         }
     }
-
-    // Update toAppRestaurant to include opening hours
-    func toAppRestaurant(from data: [String: Any]) -> AppRestaurant {
-        // Parsing logic...
-    }
 }
 
 class YelpAPIService {
-    // Existing methods...
+    private let apiKey: String
+    
+    init(apiKey: String = "") {
+        self.apiKey = apiKey
+    }
 
     func fetchNearbyRestaurants() async throws -> [AppRestaurant] {
-        // Example fetch logic...
-
-        // Example of handling price range
-        let price = data["price"] as? String ?? "Other"
-        let priceRange = parsePriceRange(from: price)
-
-        // Replace `.medium` with `.other`
-        let priceLevel = PriceRange(rawValue: price) ?? .other
-
-        // Use priceLevel accordingly
-        // e.g., assign to `price` property of AppRestaurant
+        // This is a placeholder implementation
+        // In a real app, you would make an actual API call to Yelp
+        return []
     }
 
-    func parsePriceRange(from price: String) -> PriceRange {
-        switch price {
-        case "$":
-            .oneDollar
-        case "$$":
-            .twoDollars
-        case "$$$":
-            .threeDollars
-        case "$$$$":
-            .fourDollars
-        default:
-            .other
-        }
+    private func parsePriceRange(from price: String) -> PriceRange {
+        PriceRange(from: price)
     }
-
-    // Other methods...
 }

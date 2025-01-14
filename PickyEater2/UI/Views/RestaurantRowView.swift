@@ -31,10 +31,10 @@ struct RestaurantRowView: View {
         restaurant: AppRestaurant(
             id: "1",
             name: "Sample Restaurant",
-            cuisineType: "Italian",
-            rating: 4.5,
-            priceLevel: "$$$",
-            imageURL: nil
+            distance: 1.5,
+            priceRange: .twoDollars,
+            categories: [Category(alias: "italian", title: "Italian")],
+            imageUrl: ""
         ),
         imageURL: nil
     )
