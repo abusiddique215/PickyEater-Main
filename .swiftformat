@@ -1,1 +1,5 @@
---swiftversion 5.0 --indent 4 --indentcase true --trimwhitespace always --maxwidth 120 --wraparguments before-first --wrapcollections before-first --commas always --decimalgrouping 3,6 --hexgrouping 4,8 --binarygrouping 4,8 --octalgrouping 4,8 --exponentcase lowercase --header strip --ifdef no-indent --indent 4 --indentcase true --self remove --trimwhitespace always --linebreaks lf
+--swiftversion 5.0
+--indent 4
+--trimwhitespace always
+--stripunusedargs closure-only
+--ifdef no-indent
