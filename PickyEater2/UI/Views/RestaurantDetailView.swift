@@ -1,11 +1,12 @@
 import MapKit
 import SwiftUI
+import PickyEater2Core
 
 struct RestaurantDetailView: View {
     @StateObject private var viewModel: RestaurantDetailViewModel
     @Environment(\.dismiss) private var dismiss
 
-    init(restaurant: Restaurant, yelpService: YelpAPIService) {
+    init(restaurant: AppRestaurant, yelpService: YelpAPIService) {
         _viewModel = StateObject(wrappedValue: RestaurantDetailViewModel(restaurant: restaurant, yelpService: yelpService))
     }
 
@@ -224,13 +225,15 @@ struct FlowLayout: Layout {
 #Preview {
     NavigationStack {
         RestaurantDetailView(
-            restaurant: Restaurant(
+            restaurant: AppRestaurant(
                 id: "1",
                 name: "Sample Restaurant",
-                cuisineType: "Italian",
-                rating: 4.5,
-                priceLevel: "$$$",
-                imageURL: nil
+                distance: 1.5,
+                priceRange: .twoDollars,
+                categories: [Category(alias: "italian", title: "Italian")],
+                imageUrl: "",
+                coordinates: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+                location: AppLocation(address1: "123 Main St", city: "San Francisco", state: "CA", zipCode: "94105")
             ),
             yelpService: YelpAPIService()
         )
