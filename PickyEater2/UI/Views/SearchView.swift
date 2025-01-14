@@ -107,7 +107,9 @@ struct SearchView: View {
 }
 
 #Preview {
-    SearchView()
-        .modelContainer(for: UserPreferences.self, inMemory: true)
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        SearchView()
+            .modelContainer(for: UserPreferences.self, inMemory: true)
+            .preferredColorScheme(.dark)
+    }
 }

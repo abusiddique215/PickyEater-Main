@@ -1,4 +1,5 @@
 import SwiftUI
+import PickyEater2Core
 
 struct HomeView: View {
     @StateObject private var viewModel: HomeViewModel
@@ -78,7 +79,7 @@ struct HomeView: View {
 }
 
 private struct RestaurantCard: View {
-    let restaurant: Restaurant
+    let restaurant: AppRestaurant
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
