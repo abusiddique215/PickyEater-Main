@@ -16,7 +16,7 @@ let package = Package(
     dependencies: [
         // Local Core Package
         .package(path: "PickyEater2/Core"),
-        
+
         // Networking
         .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.8.1"),
 

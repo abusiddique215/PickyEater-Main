@@ -10,7 +10,8 @@ let package = Package(
     products: [
         .library(
             name: "PickyEater2Core",
-            targets: ["PickyEater2Core"]),
+            targets: ["PickyEater2Core"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.8.1"),
@@ -27,4 +28,4 @@ let package = Package(
             path: "Tests"
         ),
     ]
-) 
+)
