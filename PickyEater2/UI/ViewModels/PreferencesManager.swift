@@ -1,34 +1,33 @@
-import SwiftData
-import SwiftUI
+import Foundation
 
-@MainActor
 class PreferencesManager: ObservableObject {
     static let shared = PreferencesManager()
-    @Published var currentPreferences: UserPreferences
+
+    @Published var userPreferences: UserPreferences = UserPreferences(
+        id: UUID(),
+        dietaryRestrictions: [],
+        favoriteCuisines: [],
+        cravings: "",
+        location: "",
+        isSubscribed: false,
+        sortBy: .name
+    )
 
     private init() {
-        // Load default preferences or from storage
-        currentPreferences = UserPreferences()
         loadPreferences()
     }
 
-    private func loadPreferences() {
-        // Load preferences from UserDefaults or other storage
-        if let data = UserDefaults.standard.data(forKey: "userPreferences"),
-           let preferences = try? JSONDecoder().decode(UserPreferences.self, from: data)
+    func loadPreferences() {
+        if let data = UserDefaults.standard.data(forKey: "UserPreferences"),
+           let decoded = try? JSONDecoder().decode(UserPreferences.self, from: data)
         {
-            currentPreferences = preferences
+            userPreferences = decoded
         }
     }
 
-    func savePreferences() {
-        if let data = try? JSONEncoder().encode(currentPreferences) {
-            UserDefaults.standard.set(data, forKey: "userPreferences")
+    func save() {
+        if let data = try? JSONEncoder().encode(userPreferences) {
+            UserDefaults.standard.set(data, forKey: "UserPreferences")
         }
-    }
-
-    func updatePreferences(_ preferences: UserPreferences) {
-        currentPreferences = preferences
-        savePreferences()
     }
 }
