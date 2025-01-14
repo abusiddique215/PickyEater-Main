@@ -1,12 +1,13 @@
-import SwiftData
 import SwiftUI
+import SwiftData
+import PickyEater2Core
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \UserPreferences.maxDistance) private var preferences: [UserPreferences]
+    @Query private var preferences: [UserPreferences]
     @State private var selectedTheme: AppTheme = .system
-    @State private var currentPreferences: UserPreferences = .init()
-
+    @State private var currentPreferences: UserPreferences = UserPreferences()
+    
     private var cuisinePreferencesLink: some View {
         NavigationLink {
             CuisineSelectionView(preferences: $currentPreferences)
@@ -14,15 +15,15 @@ struct SettingsView: View {
             HStack {
                 Text("Cuisine Preferences")
                 Spacer()
-                Text("\(currentPreferences.cuisinePreferences.count) selected")
+                Text("\(currentPreferences.favoriteCuisines.count) selected")
                     .foregroundColor(.secondary)
             }
         }
     }
-
+    
     var body: some View {
         NavigationStack {
-            List {
+            Form {
                 Section {
                     Picker("Theme", selection: $selectedTheme) {
                         Text("Light").tag(AppTheme.light)
@@ -30,18 +31,19 @@ struct SettingsView: View {
                         Text("System").tag(AppTheme.system)
                     }
                     .onChange(of: selectedTheme) { _, newValue in
-                        currentPreferences.theme = newValue
-                        try? modelContext.save()
+                        if let window = UIApplication.shared.windows.first {
+                            window.overrideUserInterfaceStyle = newValue.colorScheme ?? .unspecified
+                        }
                     }
                 } header: {
                     Text("Appearance")
                 }
-
+                
                 Section {
                     cuisinePreferencesLink
-
+                    
                     NavigationLink {
-                        Text("Dietary Restrictions Coming Soon")
+                        DietaryRestrictionsView(preferences: $currentPreferences)
                     } label: {
                         HStack {
                             Text("Dietary Restrictions")
@@ -53,54 +55,43 @@ struct SettingsView: View {
                 } header: {
                     Text("Food Preferences")
                 }
-
+                
                 Section {
-                    HStack {
-                        Text("Maximum Distance")
-                        Spacer()
-                        Text("\(currentPreferences.maxDistance) km")
-                            .foregroundColor(.secondary)
-                    }
-
-                    HStack {
-                        Text("Price Range")
-                        Spacer()
-                        Text(String(repeating: "$", count: currentPreferences.priceRange))
-                            .foregroundColor(.secondary)
+                    Toggle("Notifications", isOn: .constant(true))
+                        .tint(.accentColor)
+                    
+                    NavigationLink {
+                        NotificationSettingsView()
+                    } label: {
+                        Text("Notification Settings")
                     }
                 } header: {
-                    Text("Search Settings")
+                    Text("Notifications")
                 }
-
+                
                 Section {
                     Button(role: .destructive) {
-                        // Reset preferences to default values
-                        if let existing = preferences.first {
-                            existing.maxDistance = 5
-                            existing.priceRange = 2
-                            existing.dietaryRestrictions = []
-                            existing.cuisinePreferences = []
-                            existing.theme = .system
-                            try? modelContext.save()
-                            selectedTheme = existing.theme
-                        }
+                        // Handle sign out
                     } label: {
-                        Text("Reset All Settings")
+                        Text("Sign Out")
                     }
                 }
             }
             .navigationTitle("Settings")
             .onAppear {
-                if let existing = preferences.first {
-                    currentPreferences = existing
-                } else {
-                    let new = UserPreferences()
-                    modelContext.insert(new)
-                    try? modelContext.save()
-                    currentPreferences = new
-                }
-                selectedTheme = currentPreferences.theme
+                loadPreferences()
             }
+        }
+    }
+    
+    private func loadPreferences() {
+        if let existing = preferences.first {
+            currentPreferences = existing
+        } else {
+            let new = UserPreferences()
+            modelContext.insert(new)
+            try? modelContext.save()
+            currentPreferences = new
         }
     }
 }
