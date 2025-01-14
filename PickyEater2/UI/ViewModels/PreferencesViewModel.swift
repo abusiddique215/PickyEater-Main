@@ -1,11 +1,12 @@
-import Combine
+import SwiftUI
 import Foundation
+import PickyEater2Core
 
 @MainActor
 class PreferencesViewModel: ObservableObject {
     @Published private(set) var preferences: UserPreferences {
         didSet {
-            preferences.save()
+            save()
         }
     }
 
@@ -16,7 +17,8 @@ class PreferencesViewModel: ObservableObject {
     ]
 
     init() {
-        preferences = UserDefaults.standard.userPreferences
+        preferences = UserPreferences()
+        loadPreferences()
     }
 
     // MARK: - Dietary Restrictions
