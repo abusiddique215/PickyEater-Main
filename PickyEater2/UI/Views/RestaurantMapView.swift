@@ -71,11 +71,13 @@ struct RestaurantCallout: View {
         categories: [Category(alias: "italian", title: "Italian")],
         imageUrl: "",
         coordinates: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        location: Location(address1: "123 Main St", city: "San Francisco", state: "CA", zipCode: "94105")
+        location: AppLocation(address1: "123 Main St", city: "San Francisco", state: "CA", zipCode: "94105")
     )
     
-    return RestaurantMapView(
-        restaurants: [sampleRestaurant],
-        centerCoordinate: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
-    )
+    NavigationStack {
+        RestaurantMapView(
+            restaurants: [sampleRestaurant],
+            centerCoordinate: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+        )
+    }
 }
