@@ -1,74 +1,74 @@
-import SwiftData
-import SwiftUI
+import Foundation
 
-enum AppTheme: String, Codable {
-    case light, dark, system
-
-    var colorScheme: ColorScheme? {
-        switch self {
-        case .light: .light
-        case .dark: .dark
-        case .system: nil
-        }
-    }
-}
-
-@Model
-final class UserPreferences {
-    var maxDistance: Int
-    var priceRange: Int
-    var dietaryRestrictionsData: Data
-    var cuisinePreferencesData: Data
-    var theme: AppTheme
-
-    var dietaryRestrictions: [String] {
-        get { decodeArray(from: dietaryRestrictionsData) }
-        set { dietaryRestrictionsData = encodeArray(newValue) }
-    }
-
-    var cuisinePreferences: [String] {
-        get { decodeArray(from: cuisinePreferencesData) }
-        set { cuisinePreferencesData = encodeArray(newValue) }
-    }
-
-    init(
-        maxDistance: Int = 5,
-        priceRange: Int = 2,
-        dietaryRestrictions: [String] = [],
-        cuisinePreferences: [String] = [],
-        theme: AppTheme = .system
+public struct UserPreferences: Codable, Identifiable {
+    public let id: String
+    public var dietaryRestrictions: Set<DietaryRestriction>
+    public var favoriteCuisines: Set<String>
+    public var cravings: Set<String>
+    public var location: Location?
+    public var isSubscribed: Bool
+    public var sortBy: SortOption
+    public var maxDistance: Double
+    public var priceRange: Set<PriceRange>
+    public var minimumRating: Double
+    public var maximumDistance: Double
+    public var cuisinePreferences: [String: Double]
+    
+    public init(
+        id: String = UUID().uuidString,
+        dietaryRestrictions: Set<DietaryRestriction> = [],
+        favoriteCuisines: Set<String> = [],
+        cravings: Set<String> = [],
+        location: Location? = nil,
+        isSubscribed: Bool = false,
+        sortBy: SortOption = .bestMatch,
+        maxDistance: Double = 5.0,
+        priceRange: Set<PriceRange> = [.oneDollar, .twoDollars],
+        minimumRating: Double = 4.0,
+        maximumDistance: Double = 10.0,
+        cuisinePreferences: [String: Double] = [:]
     ) {
+        self.id = id
+        self.dietaryRestrictions = dietaryRestrictions
+        self.favoriteCuisines = favoriteCuisines
+        self.cravings = cravings
+        self.location = location
+        self.isSubscribed = isSubscribed
+        self.sortBy = sortBy
         self.maxDistance = maxDistance
         self.priceRange = priceRange
-        self.theme = theme
-        dietaryRestrictionsData = Data()
-        cuisinePreferencesData = Data()
-        self.dietaryRestrictions = dietaryRestrictions
+        self.minimumRating = minimumRating
+        self.maximumDistance = maximumDistance
         self.cuisinePreferences = cuisinePreferences
     }
-
-    private func encodeArray(_ array: [String]) -> Data {
-        (try? JSONEncoder().encode(array)) ?? Data()
-    }
-
-    private func decodeArray(from data: Data) -> [String] {
-        (try? JSONDecoder().decode([String].self, from: data)) ?? []
-    }
-
-    // Filtering functions
-    func filterRestaurants(_ restaurants: [Restaurant]) -> [Restaurant] {
-        restaurants.filter { restaurant in
-            guard let distance = restaurant.distance else { return false }
-            return distance <= Double(maxDistance) &&
-                restaurant.priceRange.rawValue <= priceRange
+    
+    public struct Location: Codable, Equatable {
+        public let latitude: Double
+        public let longitude: Double
+        
+        public init(latitude: Double, longitude: Double) {
+            self.latitude = latitude
+            self.longitude = longitude
         }
     }
-
-    func filterByCategories(_ restaurants: [Restaurant], preferredCategories: [String]) -> [Restaurant] {
-        restaurants.filter { restaurant in
-            let restaurantCategories = Set(restaurant.categories.map { $0.alias.lowercased() })
-            let preferred = Set(preferredCategories.map { $0.lowercased() })
-            return !restaurantCategories.isDisjoint(with: preferred)
+    
+    public enum SortOption: String, Codable, CaseIterable {
+        case bestMatch = "best_match"
+        case rating = "rating"
+        case reviewCount = "review_count"
+        case distance = "distance"
+        
+        public var description: String {
+            switch self {
+            case .bestMatch:
+                return "Best Match"
+            case .rating:
+                return "Rating"
+            case .reviewCount:
+                return "Review Count"
+            case .distance:
+                return "Distance"
+            }
         }
     }
 }
