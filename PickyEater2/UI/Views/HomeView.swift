@@ -1,4 +1,5 @@
 import SwiftUI
+import MapKit
 import PickyEater2Core
 
 struct HomeView: View {
@@ -7,9 +8,9 @@ struct HomeView: View {
     @State private var showingRestaurantDetail = false
 
     init(
-        yelpService: YelpAPIService,
-        locationManager: LocationManager,
-        filterService: RestaurantFilterService
+        yelpService: YelpAPIService = YelpAPIService(),
+        locationManager: LocationManager = LocationManager(),
+        filterService: RestaurantFilterService = RestaurantFilterService(preferencesManager: PreferencesManager.shared)
     ) {
         _viewModel = StateObject(wrappedValue: HomeViewModel(
             yelpService: yelpService,
