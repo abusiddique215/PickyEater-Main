@@ -1,8 +1,9 @@
-import AuthenticationServices
 import SwiftUI
+import AuthenticationServices
+import PickyEater2Core
 
 struct AuthenticationView: View {
-    @StateObject private var authService = AuthenticationService.shared
+    @StateObject private var authService = AuthenticationService()
     @State private var showError = false
     @State private var errorMessage = ""
     @Environment(\.colorScheme) private var colorScheme
@@ -41,22 +42,19 @@ struct AuthenticationView: View {
                 // Sign in Options
                 VStack(spacing: 20) {
                     // Sign in with Apple
-                    SignInWithAppleButton(
-                        onRequest: { request in
-                            request.requestedScopes = [.fullName, .email]
-                        },
-                        onCompletion: { result in
-                            Task {
-                                do {
-                                    // Handle sign in completion
-                                    showError = false
-                                } catch {
-                                    showError = true
-                                    errorMessage = error.localizedDescription
-                                }
+                    SignInWithAppleButton(.signIn) { request in
+                        request.requestedScopes = [.fullName, .email]
+                    } onCompletion: { result in
+                        Task {
+                            do {
+                                // Handle sign in completion
+                                showError = false
+                            } catch {
+                                showError = true
+                                errorMessage = error.localizedDescription
                             }
                         }
-                    )
+                    }
                     .frame(height: 44)
 
                     // Continue as Guest

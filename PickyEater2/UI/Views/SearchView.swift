@@ -23,6 +23,10 @@ struct SearchView: View {
         preferences.first ?? UserPreferences()
     }
     
+    public init() {
+        // Default initializer
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack {

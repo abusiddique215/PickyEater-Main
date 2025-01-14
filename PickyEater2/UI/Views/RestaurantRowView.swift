@@ -40,7 +40,7 @@ struct RestaurantRowView: View {
             }
         }
         .padding()
-        .background(Color(UIColor.systemBackground))
+        .background(Color(.systemBackground))
         .cornerRadius(12)
     }
 }
