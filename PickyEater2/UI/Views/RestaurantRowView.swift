@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import Core
 
 struct RestaurantRowView: View {
     let restaurant: AppRestaurant
