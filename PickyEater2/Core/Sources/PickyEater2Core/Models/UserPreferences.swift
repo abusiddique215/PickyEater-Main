@@ -1,7 +1,9 @@
 import Foundation
+import SwiftData
 
-public struct UserPreferences: Codable, Identifiable {
-    public let id: String
+@Model
+public final class UserPreferences {
+    public var id: String
     public var dietaryRestrictions: Set<DietaryRestriction>
     public var favoriteCuisines: Set<String>
     public var cravings: Set<String>
