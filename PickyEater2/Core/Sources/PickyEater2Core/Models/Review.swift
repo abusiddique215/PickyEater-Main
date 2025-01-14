@@ -1,27 +1,29 @@
 import Foundation
 
-struct Review: Identifiable, Codable, Equatable {
-    let id: String
-    let rating: Double
-    let userName: String
-    let userImageUrl: String?
-    let text: String
-    let timeCreated: Date
-    let url: String
-
-    static func == (lhs: Review, rhs: Review) -> Bool {
-        lhs.id == rhs.id
+public struct Review: Codable, Identifiable, Equatable {
+    public let id: String
+    public let rating: Double
+    public let text: String
+    public let timeCreated: Date
+    public let user: User
+    
+    public init(id: String, rating: Double, text: String, timeCreated: Date, user: User) {
+        self.id = id
+        self.rating = rating
+        self.text = text
+        self.timeCreated = timeCreated
+        self.user = user
     }
-
-    static var preview: Review {
-        Review(
-            id: "1",
-            rating: 4.5,
-            userName: "John D.",
-            userImageUrl: "https://example.com/user.jpg",
-            text: "Great food and atmosphere! The service was excellent and the prices were reasonable. Would definitely come back again.",
-            timeCreated: Date(),
-            url: "https://www.yelp.com/review/1"
-        )
+    
+    public struct User: Codable, Equatable {
+        public let id: String
+        public let name: String
+        public let imageUrl: String?
+        
+        public init(id: String, name: String, imageUrl: String?) {
+            self.id = id
+            self.name = name
+            self.imageUrl = imageUrl
+        }
     }
 }
