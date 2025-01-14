@@ -29,7 +29,11 @@ class PreferencesViewModel: ObservableObject {
 
     func toggleDietaryRestriction(_ restriction: DietaryRestriction) {
         var updatedPreferences = preferences
-        updatedPreferences.toggleDietaryRestriction(restriction)
+        if updatedPreferences.dietaryRestrictions.contains(restriction) {
+            updatedPreferences.dietaryRestrictions.remove(restriction)
+        } else {
+            updatedPreferences.dietaryRestrictions.insert(restriction)
+        }
         preferences = updatedPreferences
     }
 
@@ -137,10 +141,23 @@ class PreferencesViewModel: ObservableObject {
     }
 
     func distanceFromString(_ string: String) -> Double? {
-        let formatter = MeasurementFormatter()
-        guard let measurement = formatter.number(from: string, unit: .kilometers) else {
-            return nil
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.number(from: string)?.doubleValue
+    }
+
+    // MARK: - Private Methods
+
+    private func loadPreferences() {
+        if let data = UserDefaults.standard.data(forKey: "UserPreferences"),
+           let decoded = try? JSONDecoder().decode(UserPreferences.self, from: data) {
+            preferences = decoded
         }
-        return measurement.value * 1000 // Convert to meters
+    }
+
+    private func save() {
+        if let encoded = try? JSONEncoder().encode(preferences) {
+            UserDefaults.standard.set(encoded, forKey: "UserPreferences")
+        }
     }
 }
