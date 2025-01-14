@@ -101,7 +101,7 @@
 		1B36D09B118E83E61E65DF94 /* SearchBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchBar.swift; sourceTree = "<group>"; };
 		1E3B6F8EBB9A94952E2996D0 /* PickyEater2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PickyEater2.entitlements; sourceTree = "<group>"; };
 		1EE8B302DF06F61060347C12 /* PickyEater2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PickyEater2.entitlements; sourceTree = "<group>"; };
-		27E5C95AE8CB304C4158DB57 /* UserPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferences.swift; sourceTree = "<group>"; };
+		27E5C95AE8CB304C4158DB57 /* UserPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Core/Models/UserPreferences.swift"; sourceTree = "<group>"; };
 		3038BE543C7069CD3BA3442D /* LocationSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSelectionView.swift; sourceTree = "<group>"; };
 		30D11D75F8AC05420C5F6A81 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
 		33B37C43BE2E3079F39A787C /* AuthenticationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationService.swift; sourceTree = "<group>"; };
@@ -128,7 +128,7 @@
 		7EF68E14F71D48248E1A6914 /* ErrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorView.swift; sourceTree = "<group>"; };
 		7F8B1AA4F579FAD2A7CA8B3E /* PickyEater2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickyEater2App.swift; sourceTree = "<group>"; };
 		861F0D4201513D7061131C18 /* RestaurantService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestaurantService.swift; sourceTree = "<group>"; };
-		8B2C7A687CE347107A4495EE /* PickyEater2/Core/Models/Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickyEater2/Core/Models/Models.swift; sourceTree = "<group>"; };
+		8B2C7A687CE347107A4495EE /* PickyEater2/Core/Models/Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Core/Models/Models.swift"; sourceTree = "<group>"; };
 		8C55FD74BE57DD52FD7483C9 /* PreferencesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesManager.swift; sourceTree = "<group>"; };
 		8ECBAA65641BFA7338A2C5BD /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		90B6A8A691D81943D89ED4E4 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
@@ -150,10 +150,10 @@
 		E0393F95484E71791F1EDD8C /* backend.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = backend.md; sourceTree = "<group>"; };
 		E0CFA039981ACFA264D17A9C /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		E1754F64C811D02C24605A77 /* testing-plan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "testing-plan.md"; sourceTree = "<group>"; };
-		E3DFDB1DCDD3FCD538CCC27C /* PickyEater2/Core/Models/Restaurant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickyEater2/Core/Models/Restaurant.swift; sourceTree = "<group>"; };
+		E3DFDB1DCDD3FCD538CCC27C /* PickyEater2/Core/Models/Restaurant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Core/Models/Restaurant.swift"; sourceTree = "<group>"; };
 		E42488EF32D0A769112F235E /* YelpAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YelpAPIService.swift; sourceTree = "<group>"; };
 		E7272F9B874D30FB42A41A59 /* PickyEater2UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickyEater2UITests.swift; sourceTree = "<group>"; };
-		E9F6FA71B23ACECBF93CCCAF /* PickyEater2/Core/Models/Review.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickyEater2/Core/Models/Review.swift; sourceTree = "<group>"; };
+		E9F6FA71B23ACECBF93CCCAF /* PickyEater2/Core/Models/Review.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Core/Models/Review.swift"; sourceTree = "<group>"; };
 		EC3AB07FA5E1E12BB1757084 /* api.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = api.md; sourceTree = "<group>"; };
 		F0142CF013138646660A02BD /* CuisineSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CuisineSelectionView.swift; sourceTree = "<group>"; };
 		F06E8BDB8AFF3F99D570A6EC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
