@@ -41,21 +41,23 @@ struct AuthenticationView: View {
                 // Sign in Options
                 VStack(spacing: 20) {
                     // Sign in with Apple
-                    SignInWithAppleButton { request in
-                        request.requestedScopes = [.fullName, .email]
-                    } onCompletion: { _ in
-                        Task {
-                            do {
-                                try await authService.signInWithApple()
-                            } catch {
-                                showError = true
-                                errorMessage = error.localizedDescription
+                    SignInWithAppleButton(
+                        onRequest: { request in
+                            request.requestedScopes = [.fullName, .email]
+                        },
+                        onCompletion: { result in
+                            Task {
+                                do {
+                                    // Handle sign in completion
+                                    showError = false
+                                } catch {
+                                    showError = true
+                                    errorMessage = error.localizedDescription
+                                }
                             }
                         }
-                    }
-                    .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-                    .frame(height: 50)
-                    .cornerRadius(8)
+                    )
+                    .frame(height: 44)
 
                     // Continue as Guest
                     Button {
