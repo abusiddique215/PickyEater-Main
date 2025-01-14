@@ -2,13 +2,12 @@ import SwiftUI
 import Foundation
 import PickyEater2Core
 
-@MainActor
-class PreferencesManager: ObservableObject {
-    static let shared = PreferencesManager()
+public class PreferencesManager: ObservableObject {
+    public static let shared = PreferencesManager()
 
     @Published var userPreferences: UserPreferences = UserPreferences()
 
-    private init() {
+    public init() {
         loadPreferences()
     }
 
