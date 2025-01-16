@@ -18,38 +18,33 @@ public final class RestaurantFilterService {
         }
     }
     
-    public func filterRestaurants(
-        _ restaurants: [Restaurant],
-        preferences: UserPreferences,
-        location: String,
-        page: Int = 0,
-        useCache: Bool = true
-    ) async -> [Restaurant] {
-        let cacheKey = CacheKey(preferences: preferences, location: location, page: page)
-        
-        if useCache, let cachedResults = cache[cacheKey] {
-            return cachedResults
+    public func apply(_ restaurants: [Restaurant], preferences: UserPreferences, page: Int = 0, pageSize: Int = Constants.defaultPageSize) async -> [Restaurant] {
+        guard !restaurants.isEmpty else {
+            return []
         }
         
-        let filteredRestaurants = restaurants.filter { matchesPreferences($0, preferences: preferences) }
-        let sortedRestaurants = await sortRestaurantsByPreference(filteredRestaurants, preferences: preferences)
+        let filteredRestaurants = restaurants.filter { matchesPreferences($0, preferences) }
+        let sortedRestaurants = await sortRestaurantsByPreference(filteredRestaurants, preferences)
         
+        // Apply pagination
         let startIndex = page * pageSize
-        let endIndex = min(startIndex + pageSize, sortedRestaurants.count)
-        guard startIndex < sortedRestaurants.count else { return [] }
-        
-        let pagedResults = Array(sortedRestaurants[startIndex..<endIndex])
-        if useCache {
-            cache[cacheKey] = pagedResults
+        guard startIndex < sortedRestaurants.count else {
+            return []
         }
         
-        return pagedResults
+        let endIndex = min(startIndex + pageSize, sortedRestaurants.count)
+        return Array(sortedRestaurants[startIndex..<endIndex])
     }
     
-    private func matchesPreferences(_ restaurant: Restaurant, preferences: UserPreferences) -> Bool {
+    private func matchesPreferences(_ restaurant: Restaurant, _ preferences: UserPreferences) -> Bool {
         // Price range check
-        if !preferences.priceRange.isEmpty {
-            guard preferences.priceRange.contains(restaurant.priceRange.rawValue) else { return false }
+        if !preferences.priceRange.contains(restaurant.priceRange.rawValue) {
+            return false
+        }
+        
+        // Distance check
+        if let distance = restaurant.distance, distance > preferences.maximumDistance * 1000 { // Convert km to meters
+            return false
         }
         
         // Rating check
@@ -57,14 +52,9 @@ public final class RestaurantFilterService {
             return false
         }
         
-        // Distance check
-        if restaurant.distance > preferences.maximumDistance * 1000 { // Convert km to meters
-            return false
-        }
-        
         // Dietary restrictions check
         if !preferences.dietaryRestrictions.isEmpty {
-            let restaurantCategories = Set(restaurant.categories.map { $0.lowercased() })
+            let restaurantCategories = Set(restaurant.categories.map { $0.title.lowercased() })
             let requiredCategories = Set(preferences.dietaryRestrictions.map { $0.rawValue })
             if !requiredCategories.isSubset(of: restaurantCategories) {
                 return false
@@ -74,9 +64,9 @@ public final class RestaurantFilterService {
         return true
     }
     
-    private func sortRestaurantsByPreference(_ restaurants: [Restaurant], preferences: UserPreferences) async -> [Restaurant] {
+    private func sortRestaurantsByPreference(_ restaurants: [Restaurant], _ preferences: UserPreferences) async -> [Restaurant] {
         let restaurantsWithScores = restaurants.map { restaurant in
-            (restaurant, calculateMatchScore(restaurant, preferences: preferences))
+            (restaurant, calculateScore(restaurant, preferences))
         }
         
         return restaurantsWithScores
@@ -84,30 +74,31 @@ public final class RestaurantFilterService {
             .map { $0.0 }
     }
     
-    private func calculateMatchScore(_ restaurant: Restaurant, preferences: UserPreferences) -> Double {
-        var score = 0.0
-        let maxScore = 100.0
+    private func calculateScore(_ restaurant: Restaurant, _ preferences: UserPreferences) -> Double {
+        var score: Double = 0
         
-        // Base score from rating
-        score += (restaurant.rating / 5.0) * 30
+        // Base score from rating (0-50 points)
+        score += (restaurant.rating / 5.0) * 50
         
         // Distance score (closer is better)
-        let distanceScore = max(0, 1 - (restaurant.distance / (preferences.maximumDistance * 1000)))
-        score += distanceScore * 20
+        if let distance = restaurant.distance {
+            let distanceScore = max(0, 1 - (distance / (preferences.maximumDistance * 1000)))
+            score += distanceScore * 20
+        }
         
-        // Price range match
+        // Price range match (0-10 points)
         if preferences.priceRange.contains(restaurant.priceRange.rawValue) {
-            score += 20
+            score += 10
         }
         
         // Cuisine preferences
-        let categories = restaurant.categories.map { $0.lowercased() }
+        let categories = restaurant.categories.map { $0.title.lowercased() }
         for category in categories {
             if let preference = preferences.cuisinePreferences[category] {
-                score += preference * 30 / Double(categories.count)
+                score += Double(preference) * 2 // 0-20 points based on preference level (1-10)
             }
         }
         
-        return min(score, maxScore)
+        return score
     }
 }

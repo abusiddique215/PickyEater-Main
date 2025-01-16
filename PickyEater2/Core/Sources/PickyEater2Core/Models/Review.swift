@@ -1,13 +1,13 @@
 import Foundation
 
-public struct Review: Identifiable, Codable, Hashable, Sendable {
+public struct Review: Identifiable, Codable, Hashable {
     public let id: String
-    public let rating: Double
+    public let rating: Int
     public let text: String
-    public let timeCreated: Date
+    public let timeCreated: String
     public let user: ReviewUser
     
-    public struct ReviewUser: Codable, Hashable, Sendable {
+    public struct ReviewUser: Codable, Hashable {
         public let id: String
         public let name: String
         
@@ -15,28 +15,9 @@ public struct Review: Identifiable, Codable, Hashable, Sendable {
             self.id = id
             self.name = name
         }
-        
-        enum CodingKeys: String, CodingKey {
-            case id
-            case name
-        }
     }
     
-    enum CodingKeys: String, CodingKey {
-        case id
-        case rating
-        case text
-        case timeCreated = "time_created"
-        case user
-    }
-    
-    public init(
-        id: String,
-        rating: Double,
-        text: String,
-        timeCreated: Date,
-        user: ReviewUser
-    ) {
+    public init(id: String, rating: Int, text: String, timeCreated: String, user: ReviewUser) {
         self.id = id
         self.rating = rating
         self.text = text
