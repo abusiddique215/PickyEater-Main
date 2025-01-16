@@ -25,7 +25,7 @@ let package = Package(
                 "Kingfisher",
                 .product(name: "RevenueCat", package: "purchases-ios"),
             ],
-            path: "PickyEater2/Core"
+            path: "PickyEater2/Core/Sources/PickyEater2Core"
         ),
         .testTarget(
             name: "PickyEater2Tests",

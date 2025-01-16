@@ -18,10 +18,11 @@ public final class AuthenticationService: ObservableObject {
         // 1. Validate the credential with your backend
         // 2. Create or fetch a user account
         // 3. Set up the user session
-        
+
         // For now, we'll just create a basic user
         if let email = appleIDCredential.email,
-           let fullName = appleIDCredential.fullName {
+           let fullName = appleIDCredential.fullName
+        {
             currentUser = User(
                 id: appleIDCredential.user,
                 email: email,
@@ -29,7 +30,7 @@ public final class AuthenticationService: ObservableObject {
                 lastName: fullName.familyName ?? ""
             )
         }
-        
+
         isAuthenticated = true
     }
 

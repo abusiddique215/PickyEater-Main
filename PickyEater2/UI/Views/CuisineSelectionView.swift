@@ -43,7 +43,7 @@ struct CuisineSelectionView: View {
                                 // Will implement preset selection later
                             } label: {
                                 Text(preset)
-                                    .font(.system(.subheadline, design: .rounded))
+                                    .font(.system(.subheadline, design: .rounded))  
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 8)
                                     .background(

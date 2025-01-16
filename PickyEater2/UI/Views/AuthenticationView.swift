@@ -48,9 +48,9 @@ struct AuthenticationView: View {
                         Task {
                             do {
                                 switch result {
-                                case .success(let authorization):
+                                case let .success(authorization):
                                     try await authService.signInWithApple(authorization: authorization)
-                                case .failure(let error):
+                                case let .failure(error):
                                     throw error
                                 }
                             } catch {

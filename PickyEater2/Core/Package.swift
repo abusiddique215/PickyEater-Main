@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version:6.0
 import PackageDescription
 
 let package = Package(
@@ -19,13 +19,11 @@ let package = Package(
     targets: [
         .target(
             name: "PickyEater2Core",
-            dependencies: ["Alamofire"],
-            path: "Sources"
+            dependencies: ["Alamofire"]
         ),
         .testTarget(
             name: "PickyEater2CoreTests",
-            dependencies: ["PickyEater2Core"],
-            path: "Tests"
+            dependencies: ["PickyEater2Core"]
         ),
     ]
 )
