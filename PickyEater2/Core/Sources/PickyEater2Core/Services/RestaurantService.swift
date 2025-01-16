@@ -1,120 +1,73 @@
-import CoreLocation
 import Foundation
+import CoreLocation
 
-actor RestaurantService {
+public final class RestaurantService {
     private let yelpAPIService: YelpAPIService
     private let locationManager: LocationManager
-
-    init(yelpAPIService: YelpAPIService = YelpAPIService(), locationManager: LocationManager = LocationManager()) {
+    
+    public init(yelpAPIService: YelpAPIService, locationManager: LocationManager) {
         self.yelpAPIService = yelpAPIService
         self.locationManager = locationManager
     }
-
-    func fetchFeaturedRestaurants() async throws -> [Restaurant] {
-        guard let location = await locationManager.currentLocation else {
+    
+    public func fetchFeaturedRestaurants() async throws -> [Restaurant] {
+        guard let locationString = await locationManager.currentLocation else {
             throw ServiceError.locationNotAvailable
         }
-
-        let yelpRestaurants = try await yelpAPIService.searchRestaurants(
-            latitude: location.coordinate.latitude,
-            longitude: location.coordinate.longitude,
+        
+        let components = locationString.split(separator: ",")
+        guard components.count == 2,
+              let latitude = Double(components[0]),
+              let longitude = Double(components[1]) else {
+            throw ServiceError.invalidLocation
+        }
+        
+        let location = CLLocation(latitude: latitude, longitude: longitude)
+        
+        return try await yelpAPIService.searchRestaurants(
+            location: location,
             term: "featured",
             limit: 10
         )
-
-        return yelpRestaurants.map { yelpRestaurant in
-            Restaurant(
-                id: yelpRestaurant.id,
-                name: yelpRestaurant.name,
-                cuisineType: yelpRestaurant.categories.first?.title ?? "Restaurant",
-                rating: yelpRestaurant.rating,
-                priceLevel: yelpRestaurant.price ?? "$",
-                imageURL: URL(string: yelpRestaurant.imageUrl),
-                phoneNumber: yelpRestaurant.phone,
-                address: yelpRestaurant.location.address1,
-                city: yelpRestaurant.location.city,
-                state: yelpRestaurant.location.state,
-                zipCode: yelpRestaurant.location.zipCode,
-                latitude: yelpRestaurant.coordinates.latitude,
-                longitude: yelpRestaurant.coordinates.longitude,
-                distance: yelpRestaurant.distance,
-                reviewCount: yelpRestaurant.reviewCount
-            )
-        }
     }
-
-    func fetchNearbyRestaurants() async throws -> [Restaurant] {
-        guard let location = await locationManager.currentLocation else {
+    
+    public func fetchNearbyRestaurants() async throws -> [Restaurant] {
+        guard let locationString = await locationManager.currentLocation else {
             throw ServiceError.locationNotAvailable
         }
-
-        let yelpRestaurants = try await yelpAPIService.searchRestaurants(
-            latitude: location.coordinate.latitude,
-            longitude: location.coordinate.longitude,
+        
+        let components = locationString.split(separator: ",")
+        guard components.count == 2,
+              let latitude = Double(components[0]),
+              let longitude = Double(components[1]) else {
+            throw ServiceError.invalidLocation
+        }
+        
+        let location = CLLocation(latitude: latitude, longitude: longitude)
+        
+        return try await yelpAPIService.searchRestaurants(
+            location: location,
             limit: 20
         )
-
-        return yelpRestaurants.map { yelpRestaurant in
-            Restaurant(
-                id: yelpRestaurant.id,
-                name: yelpRestaurant.name,
-                cuisineType: yelpRestaurant.categories.first?.title ?? "Restaurant",
-                rating: yelpRestaurant.rating,
-                priceLevel: yelpRestaurant.price ?? "$",
-                imageURL: URL(string: yelpRestaurant.imageUrl),
-                phoneNumber: yelpRestaurant.phone,
-                address: yelpRestaurant.location.address1,
-                city: yelpRestaurant.location.city,
-                state: yelpRestaurant.location.state,
-                zipCode: yelpRestaurant.location.zipCode,
-                latitude: yelpRestaurant.coordinates.latitude,
-                longitude: yelpRestaurant.coordinates.longitude,
-                distance: yelpRestaurant.distance,
-                reviewCount: yelpRestaurant.reviewCount
-            )
-        }
     }
-
-    func fetchRestaurantDetails(id: String) async throws -> Restaurant {
-        let yelpRestaurant = try await yelpAPIService.fetchBusinessDetails(id: id)
-
-        return Restaurant(
-            id: yelpRestaurant.id,
-            name: yelpRestaurant.name,
-            cuisineType: yelpRestaurant.categories.first?.title ?? "Restaurant",
-            rating: yelpRestaurant.rating,
-            priceLevel: yelpRestaurant.price ?? "$",
-            imageURL: URL(string: yelpRestaurant.imageUrl),
-            phoneNumber: yelpRestaurant.phone,
-            address: yelpRestaurant.location.address1,
-            city: yelpRestaurant.location.city,
-            state: yelpRestaurant.location.state,
-            zipCode: yelpRestaurant.location.zipCode,
-            latitude: yelpRestaurant.coordinates.latitude,
-            longitude: yelpRestaurant.coordinates.longitude,
-            distance: yelpRestaurant.distance,
-            reviewCount: yelpRestaurant.reviewCount,
-            hours: yelpRestaurant.hours?.first?.open.map { hour in
-                BusinessHours(
-                    day: hour.day,
-                    open: hour.start,
-                    close: hour.end,
-                    isOvernight: hour.isOvernight
-                )
-            }
-        )
+    
+    public func fetchRestaurantDetails(id: String) async throws -> Restaurant {
+        try await yelpAPIService.fetchBusinessDetails(id: id)
     }
 }
 
-// MARK: - Service Error
-
-enum ServiceError: LocalizedError {
-    case locationNotAvailable
-
-    var errorDescription: String? {
-        switch self {
-        case .locationNotAvailable:
-            "Location services are not available. Please enable location services to find restaurants near you."
+extension RestaurantService {
+    public enum ServiceError: LocalizedError {
+        case locationNotAvailable
+        case invalidLocation
+        
+        public var errorDescription: String? {
+            switch self {
+            case .locationNotAvailable:
+                return "Location services are not available. Please enable location access in Settings."
+            case .invalidLocation:
+                return "Invalid location format received from location services."
+            }
         }
     }
 }

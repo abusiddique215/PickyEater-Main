@@ -2,49 +2,53 @@ import Foundation
 import CoreLocation
 
 @MainActor
-public final class LocationManager: NSObject, ObservableObject {
-    private let manager = CLLocationManager()
-    @Published public var currentLocation: CLLocation?
-    @Published public var authorizationStatus: CLAuthorizationStatus
+public final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published public private(set) var currentLocation: String?
+    @Published public private(set) var authorizationStatus: CLAuthorizationStatus
+    
+    private let locationManager: CLLocationManager
     
     public override init() {
-        authorizationStatus = .notDetermined
+        locationManager = CLLocationManager()
+        authorizationStatus = locationManager.authorizationStatus
+        
         super.init()
-        manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.distanceFilter = 10
+        
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.distanceFilter = 100 // Update location every 100 meters
     }
     
     public func requestAuthorization() {
-        manager.requestWhenInUseAuthorization()
+        locationManager.requestWhenInUseAuthorization()
     }
     
     public func startUpdatingLocation() {
-        manager.startUpdatingLocation()
+        locationManager.startUpdatingLocation()
     }
     
     public func stopUpdatingLocation() {
-        manager.stopUpdatingLocation()
+        locationManager.stopUpdatingLocation()
     }
-}
-
-extension LocationManager: CLLocationManagerDelegate {
-    nonisolated public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    
+    // MARK: - CLLocationManagerDelegate
+    
+    nonisolated public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
         Task { @MainActor in
-            currentLocation = locations.last
+            self.authorizationStatus = status
+        }
+    }
+    
+    nonisolated public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        let locationString = "\(location.coordinate.latitude),\(location.coordinate.longitude)"
+        Task { @MainActor in
+            self.currentLocation = locationString
         }
     }
     
     nonisolated public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Location manager failed with error: \(error.localizedDescription)")
-    }
-    
-    nonisolated public func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        Task { @MainActor in
-            authorizationStatus = status
-            if status == .authorized {
-                startUpdatingLocation()
-            }
-        }
     }
 } 
