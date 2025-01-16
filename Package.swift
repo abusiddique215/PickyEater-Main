@@ -5,6 +5,9 @@ let package = Package(
     name: "PickyEater2",
     platforms: [
         .iOS(.v17),
+        .macOS(.v14),
+        .watchOS(.v10),
+        .visionOS(.v1)
     ],
     products: [
         .library(
